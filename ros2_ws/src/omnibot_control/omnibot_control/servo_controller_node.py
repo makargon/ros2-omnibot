@@ -28,7 +28,7 @@ class ServoControllerNode(Node):
 		pwm_hz = int(self.get_parameter('pca9685.pwm_hz').value)
 		self.default_angles = self.get_parameter('servo.default').value
 
-		self.pca = PCA9685(i2c_bus, addr, pwm_hz)
+		self.pca = PCA9685(i2c_bus, address=addr, reference_clock_speed=pwm_hz)
 		self.serv_hand = Servo(self.pca.channels[ServoIndex.HAND], actuation_range=270) # вся рука
 		self.serv_rotate = Servo(self.pca.channels[ServoIndex.ROTATE], actuation_range=160) # поворот
 		self.serv_grab = Servo(self.pca.channels[ServoIndex.GRAB], actuation_range=270) # захват
