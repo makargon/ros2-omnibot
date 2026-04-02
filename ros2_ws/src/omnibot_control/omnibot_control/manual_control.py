@@ -7,7 +7,7 @@ from typing import List
 import rclpy
 from geometry_msgs.msg import Twist
 from rclpy.node import Node
-from std_msgs.msg import Float32MultiArray
+from std_msgs.msg import Int32MultiArray
 
 
 class ManualControlNode(Node):
@@ -15,17 +15,17 @@ class ManualControlNode(Node):
         super().__init__('manual_control')
 
         self.cmd_pub = self.create_publisher(Twist, '/cmd_vel', 10)
-        self.servo_pub = self.create_publisher(Float32MultiArray, '/servo_angles_deg', 10)
+        self.servo_pub = self.create_publisher(Int32MultiArray, '/servo_angles_deg', 10)
 
         self.linear_step = 0.10
         self.angular_step = 0.25
         self.max_linear = 1.0
         self.max_angular = 2.0
 
-        self.servo_step = 5.0
-        self.servo_min = 0.0
-        self.servo_max = 180.0
-        self.servo_angles: List[float] = [90.0, 90.0, 90.0]
+        self.servo_step = 5
+        self.servo_min = 0
+        self.servo_max = 180
+        self.servo_angles: List[int] = [90, 90, 90]
 
         self.vx = 0.0
         self.vy = 0.0
@@ -35,7 +35,7 @@ class ManualControlNode(Node):
         self._publish_servo_angles()
 
     @staticmethod
-    def _clamp(value: float, low: float, high: float) -> float:
+    def _clamp(value: int, low: int, high: int) -> int:
         return max(low, min(high, value))
 
     def _publish_cmd_vel(self) -> None:
@@ -46,11 +46,11 @@ class ManualControlNode(Node):
         self.cmd_pub.publish(msg)
 
     def _publish_servo_angles(self) -> None:
-        msg = Float32MultiArray()
+        msg = Int32MultiArray()
         msg.data = list(self.servo_angles)
         self.servo_pub.publish(msg)
 
-    def _update_servo(self, idx: int, delta: float) -> None:
+    def _update_servo(self, idx: int, delta: int) -> None:
         self.servo_angles[idx] = self._clamp(
             self.servo_angles[idx] + delta,
             self.servo_min,
@@ -83,17 +83,17 @@ class ManualControlNode(Node):
 
         # Servos: IK, JL, UO
         elif k == 'i':
-            self._update_servo(0, +self.servo_step)
+            self._update_servo(4, +self.servo_step)
         elif k == 'k':
-            self._update_servo(0, -self.servo_step)
+            self._update_servo(4, -self.servo_step)
         elif k == 'j':
-            self._update_servo(1, +self.servo_step)
+            self._update_servo(5, +self.servo_step)
         elif k == 'l':
-            self._update_servo(1, -self.servo_step)
+            self._update_servo(5, -self.servo_step)
         elif k == 'u':
-            self._update_servo(2, +self.servo_step)
+            self._update_servo(6, +self.servo_step)
         elif k == 'o':
-            self._update_servo(2, -self.servo_step)
+            self._update_servo(6, -self.servo_step)
 
         elif k in ('x', ' '):
             self.stop_motion()
@@ -107,7 +107,7 @@ class ManualControlNode(Node):
 
         self.get_logger().info(
             f'vx={self.vx:.2f} vy={self.vy:.2f} wz={self.wz:.2f} | '
-            f'servo=[{self.servo_angles[0]:.1f}, {self.servo_angles[1]:.1f}, {self.servo_angles[2]:.1f}]'
+            f'servo=[{self.servo_angles[0]}, {self.servo_angles[1]}, {self.servo_angles[2]}]'
         )
         return True
 
