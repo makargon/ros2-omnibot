@@ -5,6 +5,7 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Int32, Int32MultiArray
 
+import board
 from adafruit_pca9685 import PCA9685
 from adafruit_motor.servo import Servo
 
@@ -18,17 +19,18 @@ class ServoControllerNode(Node):
 	def __init__(self) -> None:
 		super().__init__('servo_controller')
 
-		self.declare_parameter('pca9685.i2c_bus', 1)
+		# self.declare_parameter('pca9685.i2c_bus', 1)
 		self.declare_parameter('pca9685.address', 0x40)
 		self.declare_parameter('pca9685.pwm_hz', 50)
 		self.declare_parameter('servo.default', [90, 90, 90])
 
-		i2c_bus = int(self.get_parameter('pca9685.i2c_bus').value)
+		i2c = board.I2C() 
+		# i2c_bus = int(self.get_parameter('pca9685.i2c_bus').value)
 		addr = int(self.get_parameter('pca9685.address').value)
 		pwm_hz = int(self.get_parameter('pca9685.pwm_hz').value)
 		self.default_angles = self.get_parameter('servo.default').value
 
-		self.pca = PCA9685(i2c_bus, address=addr, reference_clock_speed=pwm_hz)
+		self.pca = PCA9685(i2c, address=addr, reference_clock_speed=pwm_hz)
 		self.serv_hand = Servo(self.pca.channels[ServoIndex.HAND], actuation_range=270) # вся рука
 		self.serv_rotate = Servo(self.pca.channels[ServoIndex.ROTATE], actuation_range=160) # поворот
 		self.serv_grab = Servo(self.pca.channels[ServoIndex.GRAB], actuation_range=270) # захват
