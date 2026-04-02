@@ -25,17 +25,17 @@ class ManualControlNode(Node):
         self.servo_step = 5
         self.servo_min = 0
         self.servo_max = 180
-        self.servo_angles: List[int] = [90, 90, 90]
+        self.servo_angles: List[int] = [90, 90, 90]   # теперь целые числа
 
         self.vx = 0.0
         self.vy = 0.0
         self.wz = 0.0
 
         self.create_timer(0.1, self._publish_cmd_vel)  # 10 Hz hold
-        self._publish_servo_angles()
+        self._publish_servo_angles()                  # начальная публикация
 
     @staticmethod
-    def _clamp(value: int, low: int, high: int) -> int:
+    def _clamp(value: float, low: float, high: float) -> float:
         return max(low, min(high, value))
 
     def _publish_cmd_vel(self) -> None:
@@ -47,15 +47,12 @@ class ManualControlNode(Node):
 
     def _publish_servo_angles(self) -> None:
         msg = Int32MultiArray()
-        msg.data = list(self.servo_angles)
+        msg.data = self.servo_angles   # список int
         self.servo_pub.publish(msg)
 
     def _update_servo(self, idx: int, delta: int) -> None:
-        self.servo_angles[idx] = self._clamp(
-            self.servo_angles[idx] + delta,
-            self.servo_min,
-            self.servo_max,
-        )
+        new_angle = self.servo_angles[idx] + delta
+        self.servo_angles[idx] = max(self.servo_min, min(self.servo_max, new_angle))
         self._publish_servo_angles()
 
     def stop_motion(self) -> None:
@@ -81,24 +78,24 @@ class ManualControlNode(Node):
         elif k == 'e':
             self.wz = self._clamp(self.wz - self.angular_step, -self.max_angular, self.max_angular)
 
-        # Servos: IK, JL, UO
+        # Servos: I/K (индекс 0 – hand), J/L (индекс 1 – rotate), U/O (индекс 2 – grab)
         elif k == 'i':
-            self._update_servo(4, +self.servo_step)
+            self._update_servo(0, +self.servo_step)
         elif k == 'k':
-            self._update_servo(4, -self.servo_step)
+            self._update_servo(0, -self.servo_step)
         elif k == 'j':
-            self._update_servo(5, +self.servo_step)
+            self._update_servo(1, +self.servo_step)
         elif k == 'l':
-            self._update_servo(5, -self.servo_step)
+            self._update_servo(1, -self.servo_step)
         elif k == 'u':
-            self._update_servo(6, +self.servo_step)
+            self._update_servo(2, +self.servo_step)
         elif k == 'o':
-            self._update_servo(6, -self.servo_step)
+            self._update_servo(2, -self.servo_step)
 
         elif k in ('x', ' '):
             self.stop_motion()
         elif k == 'r':
-            self.servo_angles = [90.0, 90.0, 90.0]
+            self.servo_angles = [90, 90, 90]
             self._publish_servo_angles()
         elif k == 'h':
             self.print_help()
@@ -115,7 +112,7 @@ class ManualControlNode(Node):
     def print_help() -> None:
         print('Manual control:')
         print('  Motion: W/S=forward/back, A/D=left/right, Q/E=yaw left/right')
-        print('  Servos: I/K=servo PWM4 +/-, J/L=servo PWM5 +/-, U/O=servo PWM6 +/-')
+        print('  Servos: I/K=hand +/-, J/L=rotate +/-, U/O=grab +/-')
         print('  Space or X = stop motion, R = reset servos to 90, H = help, Ctrl+C = exit')
 
 
