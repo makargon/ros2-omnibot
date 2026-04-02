@@ -5,6 +5,8 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-pip \
+    python3-adafruit-circuitpython-pca9685 \
+    python3-adafruit-circuitpython-motor \
     python3-spidev \
     python3-smbus2 \
     i2c-tools \

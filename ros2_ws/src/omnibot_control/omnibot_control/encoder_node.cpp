@@ -67,7 +67,7 @@ private:
 
 class EncoderNode : public rclcpp::Node {
 public:
-    EncoderNode() : Node("encoder_ticks_node") {
+    EncoderNode() : Node("encoder") {
         this->declare_parameter("encoder1.pin_a", 2);
         this->declare_parameter("encoder1.pin_b", 3);
         this->declare_parameter("encoder2.pin_a", 4);
@@ -111,15 +111,6 @@ private:
             msg.data[i] = encoders_[i]->read();
         }
         publisher_->publish(msg);
-
-        // Опционально: лог каждую секунду (чтобы не заспамливать)
-        // static auto last_log = std::chrono::steady_clock::now();
-        // auto now = std::chrono::steady_clock::now();
-        // if (now - last_log >= std::chrono::seconds(1)) {
-        //     RCLCPP_INFO(this->get_logger(), "Ticks: [%ld, %ld, %ld]",
-        //                 msg.data[0], msg.data[1], msg.data[2]);
-        //     last_log = now;
-        // }
     }
 
     std::vector<std::unique_ptr<EncoderReader>> encoders_;
