@@ -5,8 +5,9 @@
 ## Структура
 
 - `docker/Dockerfile` — образ ROS 2 Humble для Raspberry Pi (arm64).
-- `docker-compose.yml` — запуск контейнеров с доступом к GPIO/SPI/I2C.
-- `ros2_ws/src/omnibot_control` — ROS 2 пакет (`ament_python`) с нодой `motor_controller`.
+- `docker-compose.yml` — запуск контейнеров с доступом к GPIO/SPI/I2C и USB.
+- `ros2_ws/src/omnibot_control` — ROS 2 пакет управления моторами.
+- `ros2_ws/src/omnibot_perception` — ROS 2 пакет для LIDAR и SLAM.
 
 ## Нода motor_controller
 
@@ -22,6 +23,109 @@
 - Подписка: `/servo_angles_deg` (`std_msgs/Float32MultiArray`)
 - Формат: `[servo4_deg, servo5_deg, servo6_deg]`
 - Также принимает одиночные топики: `/servo4_deg`, `/servo5_deg`, `/servo6_deg` (`std_msgs/Float32`)
+
+## Пакет omnibot_perception — LIDAR и SLAM
+
+Новый пакет для работы с RPLiDAR A1M8 и создания карт робота в реальном времени.
+
+### Узлы perception
+
+1. **rplidar_node** — драйвер лидара (используется стандартный пакет `rplidar_ros`)
+   - Публикация: `/scan` (`sensor_msgs/LaserScan`)
+   - Подключение: USB (`/dev/ttyUSB0`, по умолчанию)
+   - Скорость сканирования: 5.5 Hz (A1M8)
+   - Дальность: 0.15-12 м
+
+2. **tf_broadcaster** — трансляция фреймов робота
+   - Публикация трансформов: `odom` → `base_link` → `lidar_link`
+   - Позиция лидара относительно робота (x, y, z)
+
+3. **slam_toolbox** — SLAM (одновременная локализация и картирование)
+   - Принимает: `/scan`, `/odom`
+   - Публикует: `/map`, `/map_metadata`
+   - Создание и обновление карты в реальном времени
+   - Сохранение/загрузка карт
+
+### Запуск perception
+
+**На робота (RPI 5 в Docker):**
+```bash
+docker compose up omnibot_perception
+```
+
+Это запустит лидар, SLAM и Foxglove Bridge на RPI.
+
+**На отдельном устройстве (для визуализации):**
+
+1. Убедитесь, что оба устройства в одной сети
+2. Откройте Foxglove Desktop (или web-версию)
+3. Подключитесь к WebSocket:
+   - `ws://<IP_RPI>:8765`
+   - пример: `ws://192.168.1.42:8765`
+
+Foxglove получит топики `/scan`, `/map`, `/tf`, `/odom` через `foxglove_bridge`.
+
+### Конфигурация LIDAR
+
+Параметры в `ros2_ws/src/omnibot_perception/config/lidar.yaml`:
+- `port`: `/dev/ttyUSB0` (изменить если лидар на другом порту)
+- `baudrate`: `115200` (стандарт RPLiDAR A1M8)
+- `frame_id`: `lidar_link`
+- `angle_min/max`: полный оборот (−π до +π)
+- `range_min/max`: 0.15–12 м
+
+Проверить доступность лидара:
+```bash
+ls -la /dev/ttyUSB*
+```
+
+Если `/dev/ttyUSB0` не виден, может потребоваться USB-адаптер или другой порт.
+
+### Конфигурация SLAM
+
+Параметры SLAM в `config/slam.yaml`:
+- `resolution`: 0.05 м (5 см на пиксель карты)
+- `do_loop_closing`: `true` (закрытие циклов для более точной карты)
+- `loop_search_max_linear_radius`: 3 м
+- `scan_matcher_variance`: точность сопоставления сканов
+
+### Сетевое взаимодействие
+
+Для визуализации на удалённом устройстве:
+
+**На RPI в docker-compose.yml:**
+```yaml
+environment:
+  - ROS_DOMAIN_ID=0
+  - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+```
+
+**На клиентском устройстве (Foxglove):**
+- ROS 2 устанавливать не обязательно
+- Достаточно открыть `ws://<IP_RPI>:8765`
+
+Убедитесь, что:
+1. Оба устройства в одной подсети (например, `192.168.1.0/24`)
+2. Порт `8765/TCP` открыт
+3. Firewall не блокирует входящие на RPI для `foxglove_bridge`
+
+### Сохранение и загрузка карт
+
+**Сохранить карту:**
+```bash
+docker exec -it omnibot_perception bash -lc "
+source /opt/ros/humble/setup.bash &&
+source /workspaces/omnibot/ros2_ws/install/setup.bash &&
+ros2 run slam_toolbox serialize_map -f /tmp/my_map
+"
+```
+
+**Загрузить карту:**
+Отредактировать `config/slam.yaml`:
+```yaml
+map_file_name: '/tmp/my_map'
+use_saved_map: true
+```
 
 ## Назначение пинов
 
@@ -105,9 +209,13 @@ PCA9685:
 
 - `omnibot_ros2` — запускает `motor_controller`
 - `omnibot_servo` — запускает `servo_controller`
+- `omnibot_perception` — запускает LIDAR, SLAM и `foxglove_bridge`
 
-Запуск обоих:
-- `docker compose up -d omnibot_ros2 omnibot_servo`
+Запуск всех сервисов:
+- `docker compose up -d`
+
+Запуск только perception:
+- `docker compose up omnibot_perception`
 
 ### Ручное управление с клавиатуры
 

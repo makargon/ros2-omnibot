@@ -14,6 +14,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gpiod \
     ros-humble-geometry-msgs \
     ros-humble-launch-ros \
+    ros-humble-rplidar-ros \
+    ros-humble-slam-toolbox \
+    ros-humble-nav2-map-server \
+    ros-humble-foxglove-bridge \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /workspaces/omnibot/ros2_ws

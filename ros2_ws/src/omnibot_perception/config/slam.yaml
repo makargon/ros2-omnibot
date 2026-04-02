@@ -1,0 +1,42 @@
+# SLAM Toolbox Configuration for omnibot
+slam_toolbox:
+  ros__parameters:
+    use_sim_time: false
+    
+    # Solver parameters
+    solver_plugin: "solver_plugins::CeresSolver"
+    ceres_linear_solver: "SPARSE_NORMAL_CHOLESKY"
+    ceres_preconditioner: "SCHUR_JACOBI"
+    ceres_trust_strategy: "LEVENBERG_MARQUARDT"
+    ceres_dogleg_type: "TRADITIONAL_DOGLEG"
+    ceres_loss_function: "None"
+    
+    # Scan matcher
+    scan_matcher_variance: 0.1
+    initial_variance: 0.5
+    correlation_variance: 0.075
+    distance_variance: 0.5
+    angle_variance: 0.349
+    
+    # Mapping
+    loop_search_max_linear_radius: 3.0
+    loop_search_max_angular_distance: 0.9
+    do_loop_closing: true
+    
+    # Live SLAM
+    map_update_interval: 5
+    max_laser_range: 10.0
+    
+    # Occupancy grid mapping
+    resolution: 0.05      # 5cm per cell
+    occupied_space_weight: 100.0
+    free_space_weight: 5.0
+    
+    # Registration
+    minimum_time_interval: 0.5
+    minimum_travel_distance: 0.1
+    minimum_travel_heading: 0.1
+    
+    # IMU
+    transform_publish_period: 0.05
+    tf_buffer_duration: 30.0

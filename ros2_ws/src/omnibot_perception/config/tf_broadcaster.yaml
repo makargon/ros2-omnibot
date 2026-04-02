@@ -1,0 +1,12 @@
+# Transform Broadcaster Configuration
+tf_broadcaster_node:
+  ros__parameters:
+    # Frame names
+    base_frame: "base_link"
+    odom_frame: "odom"
+    lidar_frame: "lidar_link"
+    
+    # LIDAR position relative to base_link (x, y, z) in meters
+    lidar_x: 0.0
+    lidar_y: 0.0
+    lidar_z: 0.1    # 10 cm above base
