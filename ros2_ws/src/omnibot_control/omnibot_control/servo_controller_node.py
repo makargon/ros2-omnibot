@@ -8,6 +8,7 @@ from std_msgs.msg import Int32, Int32MultiArray
 from adafruit_pca9685 import PCA9685
 from adafruit_motor.servo import Servo
 
+# Пины
 class ServoIndex(IntEnum):
 	HAND = 4
 	ROTATE = 5
