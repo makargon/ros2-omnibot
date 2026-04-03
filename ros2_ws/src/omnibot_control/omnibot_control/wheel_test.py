@@ -1,17 +1,17 @@
+#!/usr/bin/env python3
 import time
 import errno
 from dataclasses import dataclass
 from typing import Dict, List
 
+# ---------- Проверка и импорт gpiod ----------
 try:
     import gpiod  # type: ignore
-except Exception:
+except ImportError:
     gpiod = None
 
-try:
-    from smbus2 import SMBus  # type: ignore
-except Exception:
-    SMBus = None
+import board
+from adafruit_pca9685 import PCA9685
 
 
 @dataclass
@@ -22,69 +22,60 @@ class Motor:
     in2_gpio: int
 
 
+# Настройки моторов
 MOTORS: List[Motor] = [
     Motor('motor1', 0, 5, 6),
     Motor('motor2', 1, 17, 22),
     Motor('motor3', 2, 26, 27),
 ]
 
-OE_GPIO = 16
+OE_GPIO = 16          # active-low, 0 – включить выходы PCA9685
 
 
-class PCA9685:
-    MODE1 = 0x00
-    MODE2 = 0x01
-    PRESCALE = 0xFE
-    LED0_ON_L = 0x06
-
-    def __init__(self, bus_num: int = 1, address: int = 0x40, pwm_hz: int = 1000):
-        if SMBus is None:
-            raise RuntimeError('smbus2 is not available')
-        self.bus = SMBus(bus_num)
-        self.address = address
-        self.bus.write_byte_data(self.address, self.MODE1, 0x00)
-        self.bus.write_byte_data(self.address, self.MODE2, 0x04)
-        self.set_pwm_freq(pwm_hz)
-
-    def set_pwm_freq(self, pwm_hz: int) -> None:
-        hz = max(24, min(1526, int(pwm_hz)))
-        prescale = int(round(25_000_000.0 / (4096.0 * float(hz)) - 1.0))
-        old_mode = self.bus.read_byte_data(self.address, self.MODE1)
-        sleep_mode = (old_mode & 0x7F) | 0x10
-        self.bus.write_byte_data(self.address, self.MODE1, sleep_mode)
-        self.bus.write_byte_data(self.address, self.PRESCALE, prescale)
-        self.bus.write_byte_data(self.address, self.MODE1, old_mode)
-        self.bus.write_byte_data(self.address, self.MODE1, old_mode | 0xA1)
-
-    def set_duty(self, channel: int, duty: float) -> None:
-        d = max(0.0, min(1.0, duty))
-        base = self.LED0_ON_L + 4 * channel
-        if d <= 0.0:
-            self.bus.write_byte_data(self.address, base + 0, 0x00)
-            self.bus.write_byte_data(self.address, base + 1, 0x00)
-            self.bus.write_byte_data(self.address, base + 2, 0x00)
-            self.bus.write_byte_data(self.address, base + 3, 0x10)
-            return
-        off = int(d * 4095.0)
-        self.bus.write_byte_data(self.address, base + 0, 0x00)
-        self.bus.write_byte_data(self.address, base + 1, 0x00)
-        self.bus.write_byte_data(self.address, base + 2, off & 0xFF)
-        self.bus.write_byte_data(self.address, base + 3, (off >> 8) & 0x0F)
-
-    def close(self) -> None:
-        self.bus.close()
+def set_pwm(pca: PCA9685, channel: int, value: float) -> None:
+    """
+    Установить ШИМ на канале PCA9685.
+    value: 0.0 (выкл) .. 1.0 (полная мощность)
+    """
+    # duty_cycle принимает значения от 0 до 65535
+    duty = int(max(0.0, min(1.0, value)) * 65535)
+    pca.channels[channel].duty_cycle = duty
 
 
 def main() -> None:
+    # Проверка наличия gpiod
     if gpiod is None:
-        raise RuntimeError('python3-libgpiod is not available in container')
+        raise ImportError(
+            "Библиотека gpiod не установлена.\n"
+            "Установите: sudo apt install python3-libgpiod"
+        )
 
-    pca = PCA9685(bus_num=1, address=0x40, pwm_hz=1000)
+    # Инициализация I2C и PCA9685
+    try:
+        i2c = board.I2C()
+    except Exception as e:
+        raise RuntimeError(f"Не удалось инициализировать I2C. Проверьте подключение и включите I2C.\nОшибка: {e}")
 
-    chip = gpiod.Chip('gpiochip0')
+    pca = PCA9685(i2c, address=0x40)
+    pca.frequency = 1000          # 1 кГц – подходит для большинства драйверов моторов
+
+    # Определяем правильный gpiochip (обычно gpiochip0 на Raspberry Pi)
+    # Можно попробовать несколько вариантов
+    chip_path = 'gpiochip0'
+    try:
+        chip = gpiod.Chip(chip_path)
+    except Exception:
+        chip_path = 'gpiochip4'
+        try:
+            chip = gpiod.Chip(chip_path)
+        except Exception as e:
+            pca.deinit()
+            raise RuntimeError(f"Не найден gpiochip. Попробуйте 'gpiochip0' или 'gpiochip4'.\nОшибка: {e}")
+
     lines: Dict[int, object] = {}
 
     def request(pin: int):
+        """Запросить GPIO-линию как выход"""
         if pin in lines:
             return
         line = chip.get_line(pin)
@@ -93,66 +84,74 @@ def main() -> None:
         except OSError as e:
             if e.errno == errno.EBUSY:
                 raise RuntimeError(
-                    f'GPIO{pin} is busy. Stop motor_controller first (it holds the same GPIO lines), then run wheel_test.'
+                    f'GPIO{pin} занят. Остановите motor_controller (он использует те же линии), затем запустите wheel_test.'
                 ) from e
             raise
         line.set_value(0)
         lines[pin] = line
 
     def write(pin: int, value: int):
+        """Установить значение GPIO (0 или 1)"""
         if pin in lines:
             lines[pin].set_value(1 if value else 0)
 
     try:
-        # Request IN lines (mandatory)
+        # Запрашиваем все нужные GPIO
         for m in MOTORS:
             request(m.in1_gpio)
             request(m.in2_gpio)
+        request(OE_GPIO)          # пин разрешения PCA9685
 
-        # Enable PCA9685 outputs (OE is active-low)
-        request(OE_GPIO)
+        # Включаем выходы PCA9685 (OE active-low)
         write(OE_GPIO, 0)
 
-        # PWM lines are optional because PWM0/1/2 may not be gpiochip offsets.
         def stop_all():
+            """Остановить все моторы (GPIO=0, ШИМ=0)"""
             for m in MOTORS:
                 write(m.in1_gpio, 0)
                 write(m.in2_gpio, 0)
-                pca.set_duty(m.pwm_channel, 0.0)
+                set_pwm(pca, m.pwm_channel, 0.0)
 
         stop_all()
-        print('Start wheel test: each wheel forward 2s, stop 1s, reverse 2s, stop 1s')
+        print('Тест колёс: каждое колесо вперёд 2с, стоп 1с, назад 2с, стоп 1с')
 
+        # Основной цикл тестирования
         for m in MOTORS:
             print(f'\n=== {m.name} ===')
 
-            print('forward')
+            print('вперёд')
             write(m.in1_gpio, 1)
             write(m.in2_gpio, 0)
-            pca.set_duty(m.pwm_channel, 0.6)
+            set_pwm(pca, m.pwm_channel, 0.6)
             time.sleep(2.0)
 
             stop_all()
             time.sleep(1.0)
 
-            print('reverse')
+            print('назад')
             write(m.in1_gpio, 0)
             write(m.in2_gpio, 1)
-            pca.set_duty(m.pwm_channel, 0.6)
+            set_pwm(pca, m.pwm_channel, 0.6)
             time.sleep(2.0)
 
             stop_all()
             time.sleep(1.0)
 
-        print('\nWheel test completed')
+        print('\nТест колёс успешно завершён')
 
+    except KeyboardInterrupt:
+        print('\nПрерывание пользователем')
     finally:
-        for m in MOTORS:
-            try:
-                pca.set_duty(m.pwm_channel, 0.0)
-            except Exception:
-                pass
-        pca.close()
+        # Выключение всего оборудования
+        stop_all()
+        # Отключаем выходы PCA9685 (OE = 1)
+        try:
+            write(OE_GPIO, 1)
+        except Exception:
+            pass
+        # Освобождаем PCA9685
+        pca.deinit()
+        # Освобождаем GPIO
         for line in lines.values():
             try:
                 line.set_value(0)
@@ -160,6 +159,7 @@ def main() -> None:
             except Exception:
                 pass
         chip.close()
+        print("Ресурсы освобождены, тест завершён.")
 
 
 if __name__ == '__main__':
