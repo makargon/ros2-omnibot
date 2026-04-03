@@ -15,6 +15,7 @@ class ServoIndex(IntEnum):
 	ROTATE = 5
 	GRAB = 6
 
+
 class ServoControllerNode(Node):
 	def __init__(self) -> None:
 		super().__init__('servo_controller')
@@ -24,7 +25,7 @@ class ServoControllerNode(Node):
 		self.declare_parameter('pca9685.pwm_hz', 50)
 		self.declare_parameter('servo.default', [90, 90, 90])
 
-		i2c = board.I2C() 
+		i2c = board.I2C()
 		# i2c_bus = int(self.get_parameter('pca9685.i2c_bus').value)
 		addr = int(self.get_parameter('pca9685.address').value)
 		pwm_hz = int(self.get_parameter('pca9685.pwm_hz').value)
