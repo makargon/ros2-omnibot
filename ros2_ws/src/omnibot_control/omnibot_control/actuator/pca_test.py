@@ -1,15 +1,21 @@
 import board
 import time
+
 from adafruit_pca9685 import PCA9685
+from adafruit_motor import servo
 
 def main():
     pca = PCA9685(board.I2C(), address=0x40)
     pca.frequency = 50
-    while True:
-        pca.channels[4].duty_cycle = 0x7FFF
-        time.sleep(1)
-        pca.channels[4].duty_cycle = 0
-        time.sleep(1)
+    serv = servo.Servo(pca.channels[5])
+    for i in range(180):
+        serv.angle = i
+        time.sleep(0.03)
+    for i in range(180):
+        serv.angle = 180 - i
+        time.sleep(0.03)
+    
+    pca.deinit()
 
     
 
