@@ -13,6 +13,7 @@ setup(
             'launch/motor_controller.launch.py',
             'launch/servo_controller.launch.py',
             'launch/actuator.launch.py',
+            'launch/teleop.launch.py',
         ]),
         ('share/' + package_name + '/config', [
             'config/motor_controller.yaml',
