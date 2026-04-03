@@ -5,6 +5,8 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-pip \
+    python3-yaml \
+    python3-opencv \
     python3-spidev \
     python3-smbus2 \
     i2c-tools \
@@ -12,6 +14,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgpiod-dev \
     libgpiod2 \
     gpiod \
+    ros-humble-cv-bridge \
+    ros-humble-tf2-ros \
     ros-humble-geometry-msgs \
     ros-humble-launch-ros \
     ros-humble-rplidar-ros \

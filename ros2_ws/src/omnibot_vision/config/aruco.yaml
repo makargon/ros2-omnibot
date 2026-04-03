@@ -1,0 +1,27 @@
+aruco_pose_node:
+  ros__parameters:
+    image_topic: /camera/image_rect
+    camera_info_topic: /camera/camera_info
+    annotated_image_topic: /aruco/image_annotated
+    detections_topic: /aruco/detections
+    detection_ids_topic: /aruco/detection_ids
+    field_markers_topic: /aruco/field_markers
+    field_marker_ids_topic: /aruco/field_marker_ids
+    self_robot_pose_topic: /aruco/self_robot_pose
+    opponent_robot_pose_topic: /aruco/opponent_robot_pose
+    marker_map_file: ''
+    map_frame: map
+    reference_marker_id: 0
+    reference_marker_world_pose: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    self_robot_marker_id: 10
+    opponent_robot_marker_id: 20
+    field_marker_ids: [0, 1, 2, 3]
+    marker_length: 0.08
+    dictionary: DICT_4X4_50
+    publish_debug_image: true
+    publish_tf: true
+    camera_tf_frame: camera_link
+    self_robot_tf_frame: robot_self
+    opponent_robot_tf_frame: robot_opponent
+    marker_tf_prefix: aruco_
+    publish_marker_tfs: true

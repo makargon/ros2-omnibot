@@ -1,0 +1,12 @@
+camera_node:
+  ros__parameters:
+    device: 0
+    frame_id: camera_link
+    width: 1280
+    height: 1024
+    fps: 30.0
+    publish_rectified: true
+    calibration_file: ''
+    camera_info_topic: /camera/camera_info
+    image_raw_topic: /camera/image_raw
+    image_rect_topic: /camera/image_rect

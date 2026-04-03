@@ -8,6 +8,7 @@
 - `docker-compose.yml` — запуск контейнеров с доступом к GPIO/SPI/I2C и USB.
 - `ros2_ws/src/omnibot_control` — ROS 2 пакет управления моторами.
 - `ros2_ws/src/omnibot_perception` — ROS 2 пакет для LIDAR и SLAM.
+- `ros2_ws/src/omnibot_vision` — ROS 2 пакет для USB-камеры и ArUco-меток.
 
 ## Нода motor_controller
 
@@ -187,6 +188,8 @@ PCA9685:
 3. PCA9685 виден на шине (обычно `0x40`):
    - `docker exec -it omnibot_ros2 bash -lc "i2cdetect -y 1"`
 
+Для Raspberry Pi 5 GPIO-банк обычно находится на `/dev/gpiochip4` (RP1), а не на `/dev/gpiochip0`. Если нужно принудительно выбрать chip, задайте `OMNIBOT_GPIOCHIP=/dev/gpiochip4`.
+
 После изменений Dockerfile/docker-compose обязательно пересоберите образ без кэша:
 - `docker compose build --no-cache`
 - `docker compose up`
@@ -210,6 +213,7 @@ PCA9685:
 - `omnibot_ros2` — запускает `motor_controller`
 - `omnibot_servo` — запускает `servo_controller`
 - `omnibot_perception` — запускает LIDAR, SLAM и `foxglove_bridge`
+- `omnibot_vision` — запускает USB-камеру, fisheye-коррекцию и ArUco-детектор
 
 Запуск всех сервисов:
 - `docker compose up -d`
@@ -238,3 +242,96 @@ PCA9685:
 
 После изменения параметров перезапустите сервис:
 - `docker compose restart omnibot_ros2`
+
+## Пакет omnibot_vision — USB-камера и ArUco
+
+Пакет предназначен для второй RPI с USB-камерой. Он состоит из двух нод:
+
+1. **camera_node** — захватывает кадры с камеры и публикует `image_raw`, `image_rect` и `camera_info`
+2. **aruco_pose_node** — ищет ArUco-метки, вычисляет позы, переводит координаты в мировой фрейм и публикует TF
+
+### Что публикуется
+
+- `/camera/image_raw` — сырой кадр
+- `/camera/image_rect` — кадр после fisheye-коррекции
+- `/camera/camera_info` — матрица камеры и коэффициенты дисторсии
+- `/aruco/detections` — позы всех видимых меток в фрейме камеры
+- `/aruco/detection_ids` — список ID найденных меток
+- `/aruco/field_markers` — позы меток в мировом фрейме
+- `/aruco/field_marker_ids` — ID меток, попавших в `field_markers`
+- `/aruco/self_robot_pose` — поза своей метки робота в мире
+- `/aruco/opponent_robot_pose` — поза метки противника в мире
+
+### Что публикуется в TF
+
+- `map -> camera_link` (или `camera_tf_frame`)
+- `map -> robot_self` (если видна своя метка)
+- `map -> robot_opponent` (если видна метка противника)
+- `map -> aruco_<ID>` для видимых меток (если `publish_marker_tfs: true`)
+
+### Конфигурация
+
+Файлы находятся в `ros2_ws/src/omnibot_vision/config`:
+
+- `camera.yaml` — параметры камеры
+- `calibration.yaml` — пример калибровки fisheye
+- `aruco.yaml` — ID и длина меток
+- `field_map_example.yaml` — пример карты поля на 4 ArUco
+
+### Запуск на второй RPI
+
+```bash
+docker compose up omnibot_vision
+```
+
+Если нужно использовать другую камеру или другой calib-файл:
+
+```bash
+ros2 launch omnibot_vision vision.launch.py device:=1 calibration_file:=/path/to/calibration.yaml
+```
+
+Также можно передать свою карту поля:
+
+```bash
+ros2 launch omnibot_vision vision.launch.py field_map_file:=/path/to/field_map.yaml
+```
+
+### Калибровка камеры (инструкция)
+
+1. Распечатайте шахматную доску (обычно 9x6 внутренних углов) и измерьте размер клетки в метрах.
+2. Соберите пакет `omnibot_vision`.
+3. Снимите 20–30 кадров с разных углов:
+
+```bash
+ros2 run omnibot_vision camera_calibration_capture --device 0 --output_dir /tmp/calib_images
+```
+
+4. Запустите калибровку:
+
+```bash
+ros2 run omnibot_vision fisheye_calibrate --input_dir /tmp/calib_images --output /tmp/calibration.yaml --board_cols 9 --board_rows 6 --square_size 0.025
+```
+
+5. Подставьте результат в launch:
+
+```bash
+ros2 launch omnibot_vision vision.launch.py calibration_file:=/tmp/calibration.yaml
+```
+
+Если RMS-ошибка большая, повторите шаги 3–4 с более разнообразными ракурсами.
+
+### Пример карты поля (4 ArUco)
+
+Готовый пример: `ros2_ws/src/omnibot_vision/config/field_map_example.yaml`
+
+Формат:
+- `frame_id`: мировой фрейм (обычно `map`)
+- `markers[].id`: ID ArUco
+- `markers[].pose`: `[x, y, z, roll, pitch, yaw]`, где углы в радианах
+
+### Как это работает
+
+- Нода читает карту поля (`marker_map_file`) и выбирает видимую метку-якорь из этой карты
+- По якорю вычисляется преобразование `camera -> map`
+- Все обнаруженные метки пересчитываются в мировой фрейм
+- Поза своей и чужой метки публикуется и в топики, и в TF
