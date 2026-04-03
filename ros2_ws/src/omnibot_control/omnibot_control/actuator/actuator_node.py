@@ -6,7 +6,7 @@ from std_msgs.msg import Float32MultiArray
 
 import lgpio
 
-from .chip_control.pca import PCA9685
+from ..chip_control.pca import PCA9685
 
 class MotorControl:
     def __init__(self, pca: PCA9685, chip_handle, pwm_ch: int, in1_pin: int, in2_pin: int):
