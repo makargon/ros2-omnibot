@@ -22,6 +22,8 @@ try:
 except Exception:  # pragma: no cover
     SMBus = None
 
+from .gpio_compat import resolve_gpiochip
+
 
 @dataclass
 class MotorConfig:
@@ -165,7 +167,7 @@ class GPIOController:
             return
 
         try:
-            self._chip = gpiod.Chip("gpiochip0")
+            self._chip = gpiod.Chip(resolve_gpiochip())
             # Configure only direction pins (and optional OE) as GPIO outputs.
             all_pins = set()
             for m in motors:
