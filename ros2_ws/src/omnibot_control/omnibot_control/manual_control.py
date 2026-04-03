@@ -1,56 +1,89 @@
+#!/usr/bin/env python3
 import select
 import sys
 import termios
 import tty
+import math
 from typing import List
 
 import rclpy
 from geometry_msgs.msg import Twist
 from rclpy.node import Node
-from std_msgs.msg import Int32MultiArray
+from std_msgs.msg import Float32MultiArray
 
 
 class ManualControlNode(Node):
     def __init__(self) -> None:
         super().__init__('manual_control')
 
-        self.cmd_pub = self.create_publisher(Twist, '/cmd_vel', 10)
-        self.servo_pub = self.create_publisher(Int32MultiArray, '/servo_angles_deg', 10)
+        # Публикации для actuator_node
+        self.motor_pub = self.create_publisher(Float32MultiArray, '/motor_speeds', 10)
+        self.servo_pub = self.create_publisher(Float32MultiArray, '/servo_angles', 10)
 
+        # Шаги изменения
         self.linear_step = 0.10
         self.angular_step = 0.25
         self.max_linear = 1.0
         self.max_angular = 2.0
 
-        self.servo_step = 5
-        self.servo_min = 0
-        self.servo_max = 180
-        self.servo_angles: List[int] = [90, 90, 90]   # теперь целые числа
-
+        # Скорости в платформе (робота)
         self.vx = 0.0
         self.vy = 0.0
         self.wz = 0.0
 
-        self.create_timer(0.1, self._publish_cmd_vel)  # 10 Hz hold
-        self._publish_servo_angles()                  # начальная публикация
+        # Сервы (hand, rotate, grab)
+        self.servo_step = 5.0
+        self.servo_min = 0.0
+        self.servo_max = 180.0
+        self.servo_angles: List[float] = [90.0, 90.0, 90.0]
 
-    @staticmethod
-    def _clamp(value: float, low: float, high: float) -> float:
-        return max(low, min(high, value))
+        # Таймер для публикации скоростей моторов (10 Гц)
+        self.create_timer(0.1, self._publish_motor_speeds)
+        # Начальная публикация углов серв
+        self._publish_servo_angles()
 
-    def _publish_cmd_vel(self) -> None:
-        msg = Twist()
-        msg.linear.x = self.vx
-        msg.linear.y = self.vy
-        msg.angular.z = self.wz
-        self.cmd_pub.publish(msg)
+        self.get_logger().info("Manual control node started (omni kinematics)")
+
+    # ---------- Кинематика трёхколёсного омнибота ----------
+    # Расположение моторов под углами 0°, 120°, 240° (ось X вперёд)
+    # Скорости моторов:
+    #   m1 =  vx                     + L * wz
+    #   m2 = -vx*sin30 - vy*cos30    + L * wz
+    #   m3 = -vx*sin30 + vy*cos30    + L * wz
+    # где L – коэффициент влияния поворота (обычно 0.5..1.0)
+    # Для простоты возьмём L = 0.5 (робот поворачивается плавно)
+    # Но лучше масштабировать так, чтобы максимальная скорость мотора не превышала 1.
+    # Здесь мы просто вычисляем и затем клиппируем.
+    def _compute_motor_speeds(self, vx: float, vy: float, wz: float) -> List[float]:
+        L = 0.5  # коэффициент поворота, подберите под своего робота
+        sin30 = 0.5
+        cos30 = math.sqrt(3.0) / 2.0
+
+        m1 = vx + L * wz
+        m2 = -vx * sin30 - vy * cos30 + L * wz
+        m3 = -vx * sin30 + vy * cos30 + L * wz
+
+        # Нормализация (если какое-то значение вышло за [-1, 1], масштабируем все)
+        max_abs = max(abs(m1), abs(m2), abs(m3))
+        if max_abs > 1.0:
+            m1 /= max_abs
+            m2 /= max_abs
+            m3 /= max_abs
+
+        return [float(m1), float(m2), float(m3)]
+
+    def _publish_motor_speeds(self) -> None:
+        speeds = self._compute_motor_speeds(self.vx, self.vy, self.wz)
+        msg = Float32MultiArray()
+        msg.data = speeds
+        self.motor_pub.publish(msg)
 
     def _publish_servo_angles(self) -> None:
-        msg = Int32MultiArray()
-        msg.data = self.servo_angles   # список int
+        msg = Float32MultiArray()
+        msg.data = self.servo_angles[:]  # копия
         self.servo_pub.publish(msg)
 
-    def _update_servo(self, idx: int, delta: int) -> None:
+    def _update_servo(self, idx: int, delta: float) -> None:
         new_angle = self.servo_angles[idx] + delta
         self.servo_angles[idx] = max(self.servo_min, min(self.servo_max, new_angle))
         self._publish_servo_angles()
@@ -59,26 +92,26 @@ class ManualControlNode(Node):
         self.vx = 0.0
         self.vy = 0.0
         self.wz = 0.0
-        self._publish_cmd_vel()
+        # Скорости опубликуются по таймеру
 
     def handle_key(self, key: str) -> bool:
         k = key.lower()
 
-        # Motion: WASD (linear), QE (yaw)
+        # Движение
         if k == 'w':
-            self.vx = self._clamp(self.vx + self.linear_step, -self.max_linear, self.max_linear)
+            self.vx = max(-self.max_linear, min(self.max_linear, self.vx + self.linear_step))
         elif k == 's':
-            self.vx = self._clamp(self.vx - self.linear_step, -self.max_linear, self.max_linear)
+            self.vx = max(-self.max_linear, min(self.max_linear, self.vx - self.linear_step))
         elif k == 'a':
-            self.vy = self._clamp(self.vy + self.linear_step, -self.max_linear, self.max_linear)
+            self.vy = max(-self.max_linear, min(self.max_linear, self.vy + self.linear_step))
         elif k == 'd':
-            self.vy = self._clamp(self.vy - self.linear_step, -self.max_linear, self.max_linear)
+            self.vy = max(-self.max_linear, min(self.max_linear, self.vy - self.linear_step))
         elif k == 'q':
-            self.wz = self._clamp(self.wz + self.angular_step, -self.max_angular, self.max_angular)
+            self.wz = max(-self.max_angular, min(self.max_angular, self.wz + self.angular_step))
         elif k == 'e':
-            self.wz = self._clamp(self.wz - self.angular_step, -self.max_angular, self.max_angular)
+            self.wz = max(-self.max_angular, min(self.max_angular, self.wz - self.angular_step))
 
-        # Servos: I/K (индекс 0 – hand), J/L (индекс 1 – rotate), U/O (индекс 2 – grab)
+        # Сервы: hand (индекс 0), rotate (1), grab (2)
         elif k == 'i':
             self._update_servo(0, +self.servo_step)
         elif k == 'k':
@@ -95,7 +128,7 @@ class ManualControlNode(Node):
         elif k in ('x', ' '):
             self.stop_motion()
         elif k == 'r':
-            self.servo_angles = [90, 90, 90]
+            self.servo_angles = [90.0, 90.0, 90.0]
             self._publish_servo_angles()
         elif k == 'h':
             self.print_help()
@@ -103,17 +136,17 @@ class ManualControlNode(Node):
             return False
 
         self.get_logger().info(
-            f'vx={self.vx:.2f} vy={self.vy:.2f} wz={self.wz:.2f} | '
-            f'servo=[{self.servo_angles[0]}, {self.servo_angles[1]}, {self.servo_angles[2]}]'
+            f'vel: vx={self.vx:.2f} vy={self.vy:.2f} wz={self.wz:.2f} | '
+            f'servos: [{self.servo_angles[0]:.0f}, {self.servo_angles[1]:.0f}, {self.servo_angles[2]:.0f}]'
         )
         return True
 
     @staticmethod
     def print_help() -> None:
-        print('Manual control:')
-        print('  Motion: W/S=forward/back, A/D=left/right, Q/E=yaw left/right')
-        print('  Servos: I/K=hand +/-, J/L=rotate +/-, U/O=grab +/-')
-        print('  Space or X = stop motion, R = reset servos to 90, H = help, Ctrl+C = exit')
+        print('Manual control for omnibot (3 motors, 3 servos)')
+        print('  Motion: W/S = forward/back, A/D = left/right, Q/E = rotate left/right')
+        print('  Servos: I/K = hand +/- , J/L = rotate +/- , U/O = grab +/-')
+        print('  Space or X = stop motion, R = reset servos to 90°, H = help, Ctrl+C = exit')
 
 
 def _get_key(timeout_s: float = 0.1) -> str:
