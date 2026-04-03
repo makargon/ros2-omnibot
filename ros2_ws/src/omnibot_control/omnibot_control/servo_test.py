@@ -18,7 +18,7 @@ class ServoIndex(IntEnum):
 def test_servos(servos: Dict[str, Servo], angles: List[int] = [0, 90, 160]) -> None:
     print("Начинаем проверку сервоприводов...")
     for name, servo in servos.items():
-        print(f"\nТестируем сервопривод: {name} (канал {servo._channel.channel})")
+        # print(f"\nТестируем сервопривод: {name} (канал {servo._channel.channel})")
         for angle in angles:
             print(f"  Устанавливаем угол {angle}°")
             servo.angle = angle
