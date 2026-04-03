@@ -31,6 +31,7 @@ setup(
             'servo_controller = omnibot_control.servo_controller_node:main',
             'manual_control = omnibot_control.manual_control:main',
             'wheel_test = omnibot_control.wheel_test:main',
+            'servo_test = omnibot_control.servo_test:main',
         ],
     },
 )
