@@ -12,10 +12,12 @@ setup(
         ('share/' + package_name + '/launch', [
             'launch/motor_controller.launch.py',
             'launch/servo_controller.launch.py',
+            'launch/actuator.launch.py',
         ]),
         ('share/' + package_name + '/config', [
             'config/motor_controller.yaml',
             'config/servo_controller.yaml',
+            'config/actuator.yaml',
         ]),
     ],
     install_requires=['setuptools'],
