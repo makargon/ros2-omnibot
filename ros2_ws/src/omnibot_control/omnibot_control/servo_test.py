@@ -28,7 +28,7 @@ def test_servos(servos: Dict[str, Servo], angles: List[int] = [0, 90, 160]) -> N
     print("\nПроверка завершена.")
 
 def main() -> None:
-    i2c = board.I2C(board.GP2, board.GP3)
+    i2c = board.I2C()
     pca = PCA9685(i2c, address=0x40)
     pca.frequency = 50
     servos = {
