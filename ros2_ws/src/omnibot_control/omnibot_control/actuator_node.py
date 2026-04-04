@@ -86,21 +86,21 @@ class ActuatorNode(Node):
             10
         )
 
-        self.sub_servos = self.create_subscription(
-            Int32MultiArray,
-            '/servo_angles',
-            self.servo_callback,
-            10
-        )
+        # self.sub_servos = self.create_subscription(
+        #     Int32MultiArray,
+        #     '/servo_angles',
+        #     self.servo_callback,
+        #     10
+        # )
 
     def motor_callback(self, msg: Float32MultiArray) -> None:
         for motor, speed in zip(self.motors, msg.data):
             motor.set_dir(speed > 0)
             motor.set_speed(abs(speed))
 
-    def servo_callback(self, msg: Int32MultiArray) -> None:
-        for serv, angle in zip(self.servos, msg.data):
-            serv.angle = angle
+    # def servo_callback(self, msg: Int32MultiArray) -> None:
+    #     for serv, angle in zip(self.servos, msg.data):
+    #         serv.angle = angle
 
     def destroy_node(self) -> bool:
         for motor in self.motors:
