@@ -81,17 +81,17 @@ class ActuatorNode(Node):
         #     10
         # )
 
-        # pwm_channel = self.pca.channels[4]
-        # serv = servo.Servo(pwm_channel, actuation_range=160)
+        pwm_channel = self.pca.channels[4]
+        serv = servo.Servo(pwm_channel, actuation_range=160)
 
         # # serv.angle = 120
 
-        # for i in range(80, 120):
-        #     serv.angle = i
-        #     self.get_logger().info(f'angle = {i}')
-        #     time.sleep(0.03)
-        self.pca.channels[6].duty_cycle = 0xFFFF
-        self.pca.channels[7].duty_cycle = 0xFFFF
+        for i in range(80, 120):
+            serv.angle = i
+            self.get_logger().info(f'angle = {i}')
+            time.sleep(0.03)
+        # self.pca.channels[6].duty_cycle = 0xFFFF
+        # self.pca.channels[7].duty_cycle = 0xFFFF
 
     def motor_callback(self, msg: Float32MultiArray):
         for motor, speed in zip(self.motors, msg.data):
