@@ -174,7 +174,7 @@ class ActuatorNode(Node):
 
         for motor in self.motors:
             motor.set_dir(1)
-            motor.set_speed(0.3)
+            motor.set_speed(0.7)
 
     def motor_callback(self, msg: Float32MultiArray):
         for motor, speed in zip(self.motors, msg.data):
