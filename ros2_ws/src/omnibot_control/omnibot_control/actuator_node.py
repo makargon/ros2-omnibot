@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import Any
-# import times
+import time
 
 import rclpy
 from rclpy.node import Node
@@ -80,8 +80,10 @@ class ActuatorNode(Node):
             10
         )
 
-        for serv in self.servos:
-            serv.angle = 130
+        for i in range(80, 120):
+            for serv in self.servos:
+                serv.angle = i
+            time.sleep(0.03)
 
     def motor_callback(self, msg: Float32MultiArray):
         for motor, speed in zip(self.motors, msg.data):
