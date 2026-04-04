@@ -40,8 +40,12 @@ class ActuatorNode(Node):
         super().__init__('actuators')
 
         # пока без параметров
-
-        self.pca = PCA9685(board.I2C(), address=0x40)
+        try:
+            self.pca = PCA9685(board.I2C(), address=0x40)
+            self.get_logger().info('PCA9685 успешно инициализирован по адресу 0x40')
+        except Exception as e:
+            self.get_logger().error(f'Не удалось подключиться к PCA9685: {e}')
+            raise
         self.chip = lgpio.gpiochip_open(4)
         lgpio.gpio_claim_output(self.chip, 5)
         lgpio.gpio_claim_output(self.chip, 6)
