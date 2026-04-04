@@ -41,7 +41,7 @@ class ActuatorNode(Node):
 
         # пока без параметров
         try:
-            self.pca = PCA9685(board.I2C(), address=0x40)
+            self.pca = PCA9685(board.I2C(), address=0x60)
             self.pca.frequency = 50
             self.get_logger().info('PCA9685 успешно инициализирован по адресу 0x40')
         except Exception as e:
