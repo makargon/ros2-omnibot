@@ -76,6 +76,9 @@ class ActuatorNode(Node):
             10
         )
 
+        for servo in self.servos:
+            servo.angle = 90
+
     def motor_callback(self, msg: Float32MultiArray):
         for motor, speed in zip(self.motors, msg.data):
             motor.set_dir(speed > 0)
