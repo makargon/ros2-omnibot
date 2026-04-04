@@ -68,11 +68,11 @@ class ActuatorNode(Node):
             MotorControl(pwm_channel=2, pin_a=26, pin_b=27, pca=self.pca, chip=self.chip),
         ]
 
-        # self.servos = [
-        #     servo.Servo(pwm_out=self.pca.channels[4], actuation_range=160),
-        #     servo.Servo(pwm_out=self.pca.channels[5], actuation_range=160),
-        #     servo.Servo(pwm_out=self.pca.channels[6], actuation_range=160)
-        # ]
+        self.servos = [
+            servo.Servo(pwm_out=self.pca.channels[4], actuation_range=160),
+            servo.Servo(pwm_out=self.pca.channels[5], actuation_range=160),
+            servo.Servo(pwm_out=self.pca.channels[6], actuation_range=160)
+        ]
 
         # self.sub_motors = self.create_subscription(
         #     Float32MultiArray,
@@ -81,24 +81,12 @@ class ActuatorNode(Node):
         #     10
         # )
 
-        # self.sub_servos = self.create_subscription(
-        #     Int32MultiArray,
-        #     '/servo_angles',
-        #     self.servo_callback,
-        #     10
-        # )
-
-        # pwm_channel = self.pca.channels[4]
-        # serv = servo.Servo(pwm_channel, actuation_range=160)
-
-        # # serv.angle = 120
-
-        # for i in range(80, 120):
-        #     serv.angle = i
-        #     self.get_logger().info(f'angle = {i}')
-        #     time.sleep(0.03)
-        # self.pca.channels[6].duty_cycle = 0xFFFF
-        # self.pca.channels[7].duty_cycle = 0xFFFF
+        self.sub_servos = self.create_subscription(
+            Int32MultiArray,
+            '/servo_angles',
+            self.servo_callback,
+            10
+        )
 
         # for motor in self.motors:
         #     motor.set_dir(1)
@@ -120,14 +108,6 @@ class ActuatorNode(Node):
         return super().destroy_node()
 
 def main(args=None) -> None:
-    # pca = PCA9685(board.I2C(), address=0x40)
-    # pca.frequency = 50
-    # serv = servo.Servo(pca.channels[6])
-    # for i in range(0, 120):
-    #     serv.angle = i
-    #     print(f'angle = {i}')
-    #     time.sleep(0.03)
-        
     rclpy.init(args=args)
     node = ActuatorNode()
     try:
