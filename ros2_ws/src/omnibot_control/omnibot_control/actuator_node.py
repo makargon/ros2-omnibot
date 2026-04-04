@@ -109,8 +109,7 @@ class ActuatorNode(Node):
 def main(args=None) -> None:
     rclpy.init(args=args)
     pca = PCA9685(board.I2C(), address=0x40)
-    pwm_channel = pca.channels[4]
-    serv = servo.Servo(pwm_channel, actuation_range=160)
+    serv = servo.Servo(pca.channels[6], actuation_range=160)
     for i in range(80, 120):
         serv.angle = i
         print(f'angle = {i}')
