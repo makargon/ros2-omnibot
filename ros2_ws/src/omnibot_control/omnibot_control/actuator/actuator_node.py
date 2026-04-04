@@ -1,39 +1,37 @@
-# actuator node
 from dataclasses import dataclass
-import time
+# import times
 
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float32MultiArray, Int32MultiArray
 
-import lgpio # возможно, не нужно - можно через board обращаться
-import pwmio
+import lgpio
 import board
 
 from adafruit_pca9685 import PCA9685
-from adafruit_motor import servo, motor
-
-@dataclass
-class ServoControl:
-    channel: int
-    min_angle: int
-    max_angle: int
-    angel: int
+from adafruit_motor import servo
 
 @dataclass
 class MotorControl:
     pwm_channel: int
-    in_a: int
-    in_b: int
+    pin_a: int
+    pin_b: int
     pca: PCA9685
     chip: lgpio.gpiod_chip
-    # не уверена насчет стоит ли сохранять состояние
+
     def set_dir(self, dir: bool):
         if dir:
-            pass
+            lgpio.gpio_write(self.chip, self.pin_a, 1)
+            lgpio.gpio_write(self.chip, self.pin_b, 0)
+        else:
+            lgpio.gpio_write(self.chip, self.pin_b, 1)
+            lgpio.gpio_write(self.chip, self.pin_a, 0)
 
     def set_speed(self, speed: float):
-        lgpio.gpio_write(self.chip, self.in_a, speed)
+        # speed должен быть в [0.0, 1.0]
+        # TODO проверка значений в топике?
+        duty = int(speed * 65535)
+        self.pca.channels[self.pwm_channel].duty_cycle = duty
 
 
 class ActuatorNode(Node):
@@ -52,9 +50,9 @@ class ActuatorNode(Node):
         lgpio.gpio_claim_output(self.chip, 27)
         
         self.motors = [
-            MotorControl(pwm_channel=0, in_a=5, in_b=6, pca=self.pca, chip=self.chip),
-            MotorControl(pwm_channel=1, in_a=17, in_b=22, pca=self.pca, chip=self.chip),
-            MotorControl(pwm_channel=2, in_a=26, in_b=27, pca=self.pca, chip=self.chip),
+            MotorControl(pwm_channel=0, pin_a=5, pin_b=6, pca=self.pca, chip=self.chip),
+            MotorControl(pwm_channel=1, pin_a=17, pin_b=22, pca=self.pca, chip=self.chip),
+            MotorControl(pwm_channel=2, pin_a=26, pin_b=27, pca=self.pca, chip=self.chip),
         ]
 
         self.servos = [
@@ -78,17 +76,17 @@ class ActuatorNode(Node):
         )
 
     def motor_callback(self, msg: Float32MultiArray):
-        pass
-        # for motor, speed in zip(self.motors, msg.data):
-        #     motor.set_speed(speed)
+        for motor, speed in zip(self.motors, msg.data):
+            motor.set_dir(speed > 0)
+            motor.set_speed(abs(speed))
 
     def servo_callback(self, msg: Int32MultiArray):
         for servo, angle in zip(self.servos, msg.data):
             servo.angle = angle
 
     def destroy_node(self) -> bool:
-        # for i in range(3):
-        #     self.set(i, 0.0)
+        for motor in self.motors:
+            motor.set_speed(0)
         lgpio.gpiochip_close(self.chip)
         self.pca.deinit()
         return super().destroy_node()
