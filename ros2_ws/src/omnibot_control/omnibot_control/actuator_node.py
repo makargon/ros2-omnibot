@@ -47,6 +47,12 @@ class ActuatorNode(Node):
         except Exception as e:
             self.get_logger().error(f'Не удалось подключиться к PCA9685: {e}')
             raise
+        
+        serv = servo.Servo(self.pca.channels[6])
+        for i in range(0, 120):
+            serv.angle = i
+            print(f'angle = {i}')
+            time.sleep(0.03)
 
         self.chip = lgpio.gpiochip_open(4)
         lgpio.gpio_claim_output(self.chip, 5)
@@ -114,23 +120,23 @@ class ActuatorNode(Node):
         return super().destroy_node()
 
 def main(args=None) -> None:
-    pca = PCA9685(board.I2C(), address=0x40)
-    pca.frequency = 50
-    serv = servo.Servo(pca.channels[6])
-    for i in range(0, 120):
-        serv.angle = i
-        print(f'angle = {i}')
-        time.sleep(0.03)
+    # pca = PCA9685(board.I2C(), address=0x40)
+    # pca.frequency = 50
+    # serv = servo.Servo(pca.channels[6])
+    # for i in range(0, 120):
+    #     serv.angle = i
+    #     print(f'angle = {i}')
+    #     time.sleep(0.03)
         
-    # rclpy.init(args=args)
-    # node = ActuatorNode()
-    # try:
-    #     rclpy.spin(node)
-    # except KeyboardInterrupt:
-    #     pass
-    # finally:
-    #     node.destroy_node()
-    #     rclpy.shutdown()
+    rclpy.init(args=args)
+    node = ActuatorNode()
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
 
 if __name__ == '__main__':
     main()
