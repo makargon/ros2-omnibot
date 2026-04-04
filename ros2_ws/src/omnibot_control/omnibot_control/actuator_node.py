@@ -60,33 +60,6 @@ class ActuatorNode(Node):
             MotorControl(pwm_channel=2, pin_a=26, pin_b=27, pca=self.pca, chip=self.chip),
         ]
 
-        self.servos = []
-
-        for channel in [4, 5, 6]:
-            # --- САМОЕ ВАЖНОЕ: Явно указываем min_pulse и max_pulse ---
-            # Эти значения (500 и 2500 микросекунд) являются "безопасными" и подходят для большинства серв.
-            # Для стандартного серва на 180° с импульсами 1-2ms: min_pulse=1000, max_pulse=2000.
-            # Попробуйте min_pulse=500, max_pulse=2500 для максимального диапазона.
-            s = servo.Servo(
-                self.pca.channels[channel],
-                min_pulse=500,
-                max_pulse=2500,
-                actuation_range=160  # Указываем, что диапазон движения 180°
-            )
-            self.servos.append(s)
-        
-        for i, s in enumerate(self.servos):
-            self.get_logger().info(f"Тест сервопривода {i} (канал {i+4}): 0 -> 90 -> 180")
-            s.angle = 0
-            time.sleep(1)  # Даем время дойти до 0°
-            s.angle = 90
-            time.sleep(1)
-            s.angle = 180
-            time.sleep(1)
-            s.angle = None  # Отключаем удерживающий сигнал
-            time.sleep(0.5)
-        self.get_logger().info("Диагностический тест завершен.")
-
         # self.servos = [
         #     servo.Servo(pwm_out=self.pca.channels[4], actuation_range=160),
         #     servo.Servo(pwm_out=self.pca.channels[5], actuation_range=160),
@@ -107,7 +80,11 @@ class ActuatorNode(Node):
             10
         )
 
-        # pwm_channel = self.pca.channels[4]
+        pwm_channel = self.pca.channels[4]
+        serv = servo.Servo(pwm_channel, actuation_range=160)
+
+        serv.angle = 120
+
         # for i in range(80, 120):
         #     for serv in self.servos:
         #         serv.angle = i
