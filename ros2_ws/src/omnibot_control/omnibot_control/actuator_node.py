@@ -90,6 +90,7 @@ class ActuatorNode(Node):
         #     self.get_logger().info(f'angle = {i}')
         #     time.sleep(0.03)
         self.pca.channels[6].duty_cycle = 0xFFFF
+        self.pca.channels[7].duty_cycle = 0xFFFF
 
     def motor_callback(self, msg: Float32MultiArray):
         for motor, speed in zip(self.motors, msg.data):
@@ -108,12 +109,12 @@ class ActuatorNode(Node):
         return super().destroy_node()
 
 def main(args=None) -> None:
-    pca = PCA9685(board.I2C(), address=0x40)
-    serv = servo.Servo(pca.channels[4], actuation_range=160)
-    for i in range(0, 120):
-        serv.angle = i
-        print(f'angle = {i}')
-        time.sleep(0.03)
+    # pca = PCA9685(board.I2C(), address=0x40)
+    # serv = servo.Servo(pca.channels[4], actuation_range=160)
+    # for i in range(0, 120):
+    #     serv.angle = i
+    #     print(f'angle = {i}')
+    #     time.sleep(0.03)
     rclpy.init(args=args)
     node = ActuatorNode()
     try:
