@@ -30,8 +30,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'actuator = omnibot_control.actuator.actuator_node:main',
-            'actuator_tester = omnibot_control.actuator.actuator_test_node:main',
+            'actuator = omnibot_control.actuator_node:main',
+            'actuator_tester = omnibot_control.actuator_test_node:main',
             'motor_controller = omnibot_control.motor_controller_node:main',
             'servo_controller = omnibot_control.servo_controller_node:main',
             'manual_control = omnibot_control.manual_control:main',
