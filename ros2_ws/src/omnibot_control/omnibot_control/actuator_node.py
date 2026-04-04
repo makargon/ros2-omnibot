@@ -36,7 +36,7 @@ class ActuatorNode(Node):
     def __init__(self):
         super().__init__('actuators')
 
-        # пока без параметров
+        # пока без параметров ПОТОМУ ЧТО С ПАРАМЕТРАМИ ОНО НЕ ЗАПУСКАЕТСЯЯЯЯЯЯЯЯЯЯ
 
         try:
             self.pca = PCA9685(board.I2C(), address=0x40)
