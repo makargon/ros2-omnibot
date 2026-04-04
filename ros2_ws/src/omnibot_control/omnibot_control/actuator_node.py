@@ -108,8 +108,8 @@ class ActuatorNode(Node):
 
 def main(args=None) -> None:
     pca = PCA9685(board.I2C(), address=0x40)
-    serv = servo.Servo(pca.channels[6], actuation_range=160)
-    for i in range(80, 120):
+    serv = servo.Servo(pca.channels[4], actuation_range=160)
+    for i in range(0, 120):
         serv.angle = i
         print(f'angle = {i}')
         time.sleep(0.03)
