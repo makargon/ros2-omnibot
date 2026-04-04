@@ -107,13 +107,13 @@ class ActuatorNode(Node):
         return super().destroy_node()
 
 def main(args=None) -> None:
-    rclpy.init(args=args)
     pca = PCA9685(board.I2C(), address=0x40)
     serv = servo.Servo(pca.channels[6], actuation_range=160)
     for i in range(80, 120):
         serv.angle = i
         print(f'angle = {i}')
         time.sleep(0.03)
+    rclpy.init(args=args)
     node = ActuatorNode()
     try:
         rclpy.spin(node)
