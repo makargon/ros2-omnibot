@@ -87,6 +87,7 @@ class ActuatorNode(Node):
 
         for i in range(80, 120):
             serv.angle = i
+            self.get_logger().info(f'angle = {i}')
             time.sleep(0.03)
 
     def motor_callback(self, msg: Float32MultiArray):
