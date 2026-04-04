@@ -46,19 +46,19 @@ class ActuatorNode(Node):
         except Exception as e:
             self.get_logger().error(f'Не удалось подключиться к PCA9685: {e}')
             raise
-        self.chip = lgpio.gpiochip_open(4)
-        lgpio.gpio_claim_output(self.chip, 5)
-        lgpio.gpio_claim_output(self.chip, 6)
-        lgpio.gpio_claim_output(self.chip, 17)
-        lgpio.gpio_claim_output(self.chip, 22)
-        lgpio.gpio_claim_output(self.chip, 26)
-        lgpio.gpio_claim_output(self.chip, 27)
+        # self.chip = lgpio.gpiochip_open(4)
+        # lgpio.gpio_claim_output(self.chip, 5)
+        # lgpio.gpio_claim_output(self.chip, 6)
+        # lgpio.gpio_claim_output(self.chip, 17)
+        # lgpio.gpio_claim_output(self.chip, 22)
+        # lgpio.gpio_claim_output(self.chip, 26)
+        # lgpio.gpio_claim_output(self.chip, 27)
         
-        self.motors = [
-            MotorControl(pwm_channel=0, pin_a=5, pin_b=6, pca=self.pca, chip=self.chip),
-            MotorControl(pwm_channel=1, pin_a=17, pin_b=22, pca=self.pca, chip=self.chip),
-            MotorControl(pwm_channel=2, pin_a=26, pin_b=27, pca=self.pca, chip=self.chip),
-        ]
+        # self.motors = [
+        #     MotorControl(pwm_channel=0, pin_a=5, pin_b=6, pca=self.pca, chip=self.chip),
+        #     MotorControl(pwm_channel=1, pin_a=17, pin_b=22, pca=self.pca, chip=self.chip),
+        #     MotorControl(pwm_channel=2, pin_a=26, pin_b=27, pca=self.pca, chip=self.chip),
+        # ]
 
         # self.servos = [
         #     servo.Servo(pwm_out=self.pca.channels[4], actuation_range=160),
@@ -66,29 +66,28 @@ class ActuatorNode(Node):
         #     servo.Servo(pwm_out=self.pca.channels[6], actuation_range=160)
         # ]
 
-        self.sub_motors = self.create_subscription(
-            Float32MultiArray,
-            '/motor_speeds',
-            self.motor_callback,
-            10
-        )
+        # self.sub_motors = self.create_subscription(
+        #     Float32MultiArray,
+        #     '/motor_speeds',
+        #     self.motor_callback,
+        #     10
+        # )
 
-        self.sub_servos = self.create_subscription(
-            Int32MultiArray,
-            '/servo_angles',
-            self.servo_callback,
-            10
-        )
+        # self.sub_servos = self.create_subscription(
+        #     Int32MultiArray,
+        #     '/servo_angles',
+        #     self.servo_callback,
+        #     10
+        # )
 
         pwm_channel = self.pca.channels[4]
         serv = servo.Servo(pwm_channel, actuation_range=160)
 
-        serv.angle = 120
+        # serv.angle = 120
 
-        # for i in range(80, 120):
-        #     for serv in self.servos:
-        #         serv.angle = i
-        #     time.sleep(0.03)
+        for i in range(80, 120):
+            serv.angle = i
+            time.sleep(0.03)
 
     def motor_callback(self, msg: Float32MultiArray):
         for motor, speed in zip(self.motors, msg.data):
