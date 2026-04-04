@@ -47,7 +47,7 @@ class TestActuatorNode(Node):
         self.servo_pub.publish(servo_msg)
         
         self.get_logger().info(
-            f"Published:  servos={servo_angles}" # motors={[round(v,2) for v in motor_speeds]},
+            f"Published: motors={[round(v,2) for v in motor_speeds]}, servos={servo_angles}" # 
         )
         
         self.counter += 1
