@@ -7,7 +7,7 @@ import time
 PIN = 0
 
 # def main():
-h = lgpio.gpiod_chip(4)
+h = lgpio.gpiochip_open(4)
 lgpio.gpio_claim_output(h, PIN)
 # try:
 while True:
