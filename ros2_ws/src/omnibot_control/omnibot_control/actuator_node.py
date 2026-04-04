@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Any
 # import times
 
 import rclpy
@@ -17,7 +18,7 @@ class MotorControl:
     pin_a: int
     pin_b: int
     pca: PCA9685
-    chip: lgpio.gpiod_chip
+    chip: Any
 
     def set_dir(self, dir: bool):
         if dir:
