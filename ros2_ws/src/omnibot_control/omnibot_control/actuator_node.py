@@ -76,8 +76,8 @@ class ActuatorNode(Node):
             10
         )
 
-        for servo in self.servos:
-            servo.angle = 90
+        for serv in self.servos:
+            serv.angle = 90
 
     def motor_callback(self, msg: Float32MultiArray):
         for motor, speed in zip(self.motors, msg.data):
@@ -85,8 +85,8 @@ class ActuatorNode(Node):
             motor.set_speed(abs(speed))
 
     def servo_callback(self, msg: Int32MultiArray):
-        for servo, angle in zip(self.servos, msg.data):
-            servo.angle = angle
+        for serv, angle in zip(self.servos, msg.data):
+            serv.angle = angle
 
     def destroy_node(self) -> bool:
         for motor in self.motors:
