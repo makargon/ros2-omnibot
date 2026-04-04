@@ -28,13 +28,13 @@ def wheel_test(pca: PCA9685):
 
     
     lgpio.gpiochip_close(chip)
-    pca.deinit()
+    # pca.deinit()
 
 
 def main():
     pca = PCA9685(board.I2C(), address=0x40)
     pca.frequency = 50
-    
+    wheel_test(pca)
     pca.deinit()
 
     
