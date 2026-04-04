@@ -120,6 +120,7 @@ def main(args=None) -> None:
         serv.angle = i
         print(f'angle = {i}')
         time.sleep(0.03)
+        
     rclpy.init(args=args)
     node = ActuatorNode()
     try:
