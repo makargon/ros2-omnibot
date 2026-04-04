@@ -60,6 +60,8 @@ class ActuatorNode(Node):
             MotorControl(pwm_channel=2, pin_a=26, pin_b=27, pca=self.pca, chip=self.chip),
         ]
 
+        self.servos = []
+
         for channel in [4, 5, 6]:
             # --- САМОЕ ВАЖНОЕ: Явно указываем min_pulse и max_pulse ---
             # Эти значения (500 и 2500 микросекунд) являются "безопасными" и подходят для большинства серв.
