@@ -23,14 +23,14 @@ class TestActuatorNode(Node):
         # Скорость от -1.0 до 1.0 (знак задаёт направление)
         # Меняем значения синусоидально для наглядности
         t = self.counter * 0.5  # условное время
-        # motor_speeds = [
-        #     0.8 * math.sin(t),          # мотор 0
-        #     0.5 * math.sin(t + 2.0),    # мотор 1
-        #     -0.6 * math.sin(t * 0.7)    # мотор 2
-        # ]
-        # motor_msg = Float32MultiArray()
-        # motor_msg.data = motor_speeds
-        # self.motor_pub.publish(motor_msg)
+        motor_speeds = [
+            0.8 * math.sin(t),          # мотор 0
+            0.5 * math.sin(t + 2.0),    # мотор 1
+            -0.6 * math.sin(t * 0.7)    # мотор 2
+        ]
+        motor_msg = Float32MultiArray()
+        motor_msg.data = motor_speeds
+        self.motor_pub.publish(motor_msg)
         
         # --- Тестовые значения для сервоприводов (3 сервы) ---
         # Углы в градусах, должны быть в пределах [0, 160] (actuation_range=160)
