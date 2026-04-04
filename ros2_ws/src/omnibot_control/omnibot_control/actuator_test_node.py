@@ -22,15 +22,15 @@ class TestActuatorNode(Node):
         # --- Тестовые значения для моторов (3 мотора) ---
         # Скорость от -1.0 до 1.0 (знак задаёт направление)
         # Меняем значения синусоидально для наглядности
-        t = self.counter * 0.5  # условное время
-        motor_speeds = [
-            0.8 * math.sin(t),          # мотор 0
-            0.5 * math.sin(t + 2.0),    # мотор 1
-            -0.6 * math.sin(t * 0.7)    # мотор 2
-        ]
-        motor_msg = Float32MultiArray()
-        motor_msg.data = motor_speeds
-        self.motor_pub.publish(motor_msg)
+        # t = self.counter * 0.5  # условное время
+        # motor_speeds = [
+        #     0.8 * math.sin(t),          # мотор 0
+        #     0.5 * math.sin(t + 2.0),    # мотор 1
+        #     -0.6 * math.sin(t * 0.7)    # мотор 2
+        # ]
+        # motor_msg = Float32MultiArray()
+        # motor_msg.data = motor_speeds
+        # self.motor_pub.publish(motor_msg)
         
         # --- Тестовые значения для сервоприводов (3 сервы) ---
         # Углы в градусах, должны быть в пределах [0, 160] (actuation_range=160)
@@ -47,7 +47,7 @@ class TestActuatorNode(Node):
         self.servo_pub.publish(servo_msg)
         
         self.get_logger().info(
-            f"Published: motors={[round(v,2) for v in motor_speeds]}, servos={servo_angles}"
+            f"Published:  servos={servo_angles}" # motors={[round(v,2) for v in motor_speeds]},
         )
         
         self.counter += 1
