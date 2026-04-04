@@ -23,7 +23,7 @@ def wheel_test(pca: PCA9685):
     lgpio.gpio_write(chip, 5, 1)
     lgpio.gpio_write(chip, 6, 0)
 
-    pca.channels[0].duty_cycle = 65535 * 0.5
+    pca.channels[0].duty_cycle = int(65535 * 0.5)
     time.sleep(5)
 
     
