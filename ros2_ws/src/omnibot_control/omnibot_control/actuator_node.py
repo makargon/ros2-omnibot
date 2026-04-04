@@ -36,23 +36,17 @@ class ActuatorNode(Node):
     def __init__(self):
         super().__init__('actuators')
 
-        self.declare_parameter('i2c_address', 0x40)
-        self.declare_parameter('pca_frequency', 50)
-        self.declare_parameter('gpio_chip', 4)
-
-        i2c_address = self.get_parameter('i2c_address').value
-        pca_frequency = self.get_parameter('pca_frequency').value
-        gpio_chip = self.get_parameter('gpio_chip').value
+        # пока без параметров
 
         try:
-            self.pca = PCA9685(board.I2C(), address=i2c_address)
-            self.pca.frequency = pca_frequency
-            self.get_logger().info(f'PCA9685 успешно инициализирован по адресу {i2c_address}')
+            self.pca = PCA9685(board.I2C(), address=0x40)
+            self.pca.frequency = 50
+            self.get_logger().info('PCA9685 успешно инициализирован по адресу 0x40')
         except Exception as e:
             self.get_logger().error(f'Не удалось подключиться к PCA9685: {e}')
             raise
     
-        self.chip = lgpio.gpiochip_open(gpio_chip)
+        self.chip = lgpio.gpiochip_open(4)
         lgpio.gpio_claim_output(self.chip, 5)
         lgpio.gpio_claim_output(self.chip, 6)
         lgpio.gpio_claim_output(self.chip, 17)
