@@ -25,10 +25,6 @@ class PCA9685:
         self._address = address
         self._last_error = ''
 
-        if SMBus is None:
-            self._last_error = 'smbus2 not installed'
-            return
-
         try:
             self._bus = SMBus(bus_num)
             # Restart + auto-increment
@@ -53,13 +49,9 @@ class PCA9685:
         return self._last_error
 
     def _write_reg(self, reg: int, value: int) -> None:
-        if self._bus is None:
-            return
         self._bus.write_byte_data(self._address, reg, value & 0xFF)
 
     def set_pwm_freq(self, pwm_hz: int) -> None:
-        if self._bus is None:
-            return
         hz = max(24, min(1526, int(pwm_hz)))
         prescale = int(round(25_000_000.0 / (4096.0 * float(hz)) - 1.0))
 
@@ -71,19 +63,15 @@ class PCA9685:
         self._write_reg(self.MODE1, old_mode | 0xA1)
 
     def set_channel_duty(self, channel: int, duty: float) -> None:
-        if not self._enabled or self._bus is None or channel < 0 or channel > 15:
-            return
-
         base = self.LED0_ON_L + 4 * channel
-        d = max(0.0, min(1.0, duty))
-        if d <= 0.0:
+        if duty == 0.0:
             # FULL OFF
             self._write_reg(base + 0, 0x00)
             self._write_reg(base + 1, 0x00)
             self._write_reg(base + 2, 0x00)
             self._write_reg(base + 3, 0x10)
             return
-        if d >= 1.0:
+        if duty == 1.0:
             # FULL ON
             self._write_reg(base + 0, 0x00)
             self._write_reg(base + 1, 0x10)
@@ -91,15 +79,14 @@ class PCA9685:
             self._write_reg(base + 3, 0x00)
             return
 
-        off = int(d * 4095.0)
+        off = int(duty * 4095.0)
         self._write_reg(base + 0, 0x00)
         self._write_reg(base + 1, 0x00)
         self._write_reg(base + 2, off & 0xFF)
         self._write_reg(base + 3, (off >> 8) & 0x0F)
 
     def close(self) -> None:
-        if self._bus is not None:
-            self._bus.close()
+        self._bus.close()
 
 
 @dataclass
@@ -119,8 +106,6 @@ class MotorControl:
             lgpio.gpio_write(self.chip, self.pin_a, 0)
 
     def set_speed(self, speed: float):
-        # speed должен быть в [0.0, 1.0]
-        # TODO проверка значений в топике?
         duty = max(0.0, min(1.0, speed))
         self.pca.set_channel_duty(self.pwm_channel, duty)
 
@@ -204,7 +189,7 @@ class ActuatorNode(Node):
         for motor in self.motors:
             motor.set_speed(0)
         lgpio.gpiochip_close(self.chip)
-        self.pca.deinit()
+        self.pca.close()
         return super().destroy_node()
 
 def main(args=None) -> None:
