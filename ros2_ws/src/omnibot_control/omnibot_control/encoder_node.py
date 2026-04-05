@@ -14,8 +14,8 @@ class RotaryEncoder:
         self.counter: int = 0
         self.lock = threading.Lock()
 
-        lgpio.gpio_claim_input(self.handle, self.pin_a)
-        lgpio.gpio_claim_input(self.handle, self.pin_b)
+        lgpio.gpio_claim_alert(self.handle, self.pin_a, lgpio.BOTH_EDGES)
+        lgpio.gpio_claim_alert(self.handle, self.pin_b, lgpio.BOTH_EDGES)
 
         self.last_a = lgpio.gpio_read(self.handle, self.pin_a)
         self.last_b = lgpio.gpio_read(self.handle, self.pin_b)
