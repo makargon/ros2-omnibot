@@ -95,7 +95,11 @@ class EncoderNode(Node):
 
     def publish_count(self):
         msg = Int32MultiArray()
-        counts = [enc.get_count() for enc in self.encoders]
+        counts = []
+        for enc in self.encoders:
+            counts.append(enc.count())
+            enc.reset()
+        # counts = [enc.count() for enc in self.encoders]
         msg.data = counts
         self.pub.publish(msg)
 
