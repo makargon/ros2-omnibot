@@ -17,6 +17,9 @@ class RotaryEncoder:
         lgpio.gpio_claim_input(self.handle, self.pin_a)
         lgpio.gpio_claim_input(self.handle, self.pin_b)
 
+        self.last_a = lgpio.gpio_read(self.handle, self.pin_a)
+        self.last_b = lgpio.gpio_read(self.handle, self.pin_b)
+
         self.cb_a = lgpio.callback(self.handle, self.pin_a, lgpio.BOTH_EDGES, self._on_change)
         self.cb_b = lgpio.callback(self.handle, self.pin_b, lgpio.BOTH_EDGES, self._on_change)
 
@@ -65,20 +68,21 @@ class RotaryEncoder:
             self.counter = 0
 
     def stop(self):
-        """Отключает callback'и, освобождая ресурсы."""
         self.cb_a.cancel()
         self.cb_b.cancel()
-        
-
 
 class EncoderNode(Node):
     def __init__(self):
         super().__init__('encoder_node')
 
+        self._log_counter = 0
+
         self.chip = lgpio.gpiochip_open(4)
 
         self.encoders = [
-            
+            RotaryEncoder(self.chip, 10, 9),
+            RotaryEncoder(self.chip, 13, 19),
+            RotaryEncoder(self.chip, 20, 21)
         ]
 
         self.pub_encoder = self.create_publisher(
@@ -91,10 +95,17 @@ class EncoderNode(Node):
 
     def publish_count(self):
         msg = Int32MultiArray()
-        msg.data = self.encoders.get_count()
+        counts = [enc.get_count() for enc in self.encoders]
+        msg.data = counts
         self.pub.publish(msg)
 
+        self._log_counter += 1
+        if self._log_counter % 40 == 0:
+            self.get_logger().info(f"Состояние энкодеров: {counts}")
+
     def destroy_node(self) -> bool:
+        for enc in self.encoders:
+            enc.stop()
         lgpio.gpiochip_close(self.chip)
         return super().destroy_node()
 
