@@ -85,7 +85,7 @@ class EncoderNode(Node):
             RotaryEncoder(self.chip, 20, 21)
         ]
 
-        self.pub_encoder = self.create_publisher(
+        self.pub = self.create_publisher(
             Int32MultiArray,
             '/encoders_counter',
             10
