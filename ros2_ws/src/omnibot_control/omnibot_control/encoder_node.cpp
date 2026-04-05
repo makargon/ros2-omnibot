@@ -1,18 +1,18 @@
-#include <pigpio.h>
+#include <lgpio.h>
+
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/int32_multi_array.hpp>
+
 #include <chrono>
 // #include <memory>
 #include <vector>
 
 class EncoderReader {
 public:
-    EncoderReader(int pin_a, int pin_b)
+    EncoderReader(int handle, int pin_a, int pin_b)
         : pin_a_(pin_a), pin_b_(pin_b), counter_(0), last_a_(0), last_b_(0) {
-        gpioSetMode(pin_a_, PI_INPUT);
-        gpioSetMode(pin_b_, PI_INPUT);
-        gpioSetPullUpDown(pin_a_, PI_PUD_UP);
-        gpioSetPullUpDown(pin_b_, PI_PUD_UP);
+        lgGpioClaimInput(handle, LG_SET_PULL_UP, pin_a_);
+        lgGpioClaimInput(handle, LG_SET_PULL_UP, pin_b_);
 
         last_a_ = gpioRead(pin_a_);
         last_b_ = gpioRead(pin_b_);
@@ -68,12 +68,12 @@ private:
 class EncoderNode : public rclcpp::Node {
 public:
     EncoderNode() : Node("encoder") {
-        this->declare_parameter("encoder1.pin_a", 2);
-        this->declare_parameter("encoder1.pin_b", 3);
-        this->declare_parameter("encoder2.pin_a", 4);
-        this->declare_parameter("encoder2.pin_b", 5);
-        this->declare_parameter("encoder3.pin_a", 6);
-        this->declare_parameter("encoder3.pin_b", 7);
+        this->declare_parameter("encoder1.pin_a", 10);
+        this->declare_parameter("encoder1.pin_b", 9);
+        this->declare_parameter("encoder2.pin_a", 13);
+        this->declare_parameter("encoder2.pin_b", 19);
+        this->declare_parameter("encoder3.pin_a", 20);
+        this->declare_parameter("encoder3.pin_b", 21);
 
         int e1a = this->get_parameter("encoder1.pin_a").as_int();
         int e1b = this->get_parameter("encoder1.pin_b").as_int();
@@ -82,10 +82,12 @@ public:
         int e3a = this->get_parameter("encoder3.pin_a").as_int();
         int e3b = this->get_parameter("encoder3.pin_b").as_int();
 
-        if (gpioInitialise() < 0) {
-            RCLCPP_ERROR(this->get_logger(), "Ошибка инициализации pigpio! Запустите 'sudo pigpiod'");
+        if (lgGpiochipOpen(4) < 0) {
+            RCLCPP_ERROR(this->get_logger(), "Error initilize GPIO");
             rclcpp::shutdown();
         }
+
+
 
         encoders_.push_back(std::make_unique<EncoderReader>(e1a, e1b));
         encoders_.push_back(std::make_unique<EncoderReader>(e2a, e2b));
@@ -100,7 +102,7 @@ public:
     }
 
     ~EncoderNode() {
-        gpioTerminate();
+        lgGpiochipClose(4);
     }
 
 private:
