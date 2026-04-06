@@ -7,6 +7,7 @@ from rclpy.node import Node
 from std_msgs.msg import Int32MultiArray
 
 class RotaryEncoder:
+    
     def __init__(self, chip: Any, pin_a: int, pin_b: int):
         self.handle = chip
         self.pin_a = pin_a
