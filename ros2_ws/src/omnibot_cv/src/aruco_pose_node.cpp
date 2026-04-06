@@ -10,6 +10,8 @@
 #include <sensor_msgs/msg/camera_info.hpp>
 #include <sensor_msgs/msg/image.hpp>
 #include <std_msgs/msg/string.hpp>
+#include <visualization_msgs/msg/marker.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
 
 #include "omnibot_cv/aruco_geometry.hpp"
 #include "omnibot_cv/world_pose_tracker.hpp"
@@ -37,7 +39,7 @@ public:
 
     debug_image_topic_ = declare_parameter<std::string>("debug_image_topic", "/aruco/debug_image");
     detections_text_topic_ = declare_parameter<std::string>("detections_text_topic", "/aruco/detections_text");
-    field_points_topic_ = declare_parameter<std::string>("field_points_topic", "/aruco/detected_points_field");
+    detected_markers_topic_ = declare_parameter<std::string>("detected_markers_topic", "/aruco/detected_markers_field");
 
     omnibot_cv::WorldPoseTracker::Params params;
     params.smoothing_alpha = declare_parameter<double>("world_pose_smoothing_alpha", 0.2);
@@ -62,7 +64,7 @@ public:
 
     markers_pub_ = create_publisher<geometry_msgs::msg::PoseArray>("/aruco/marker_poses", 10);
     robot_pub_ = create_publisher<geometry_msgs::msg::PoseStamped>("/aruco/robot_pose", 10);
-    field_points_pub_ = create_publisher<geometry_msgs::msg::PoseArray>(field_points_topic_, 10);
+    detected_markers_pub_ = create_publisher<visualization_msgs::msg::MarkerArray>(detected_markers_topic_, 10);
     debug_image_pub_ = create_publisher<sensor_msgs::msg::Image>(debug_image_topic_, rclcpp::SensorDataQoS());
     detections_text_pub_ = create_publisher<std_msgs::msg::String>(detections_text_topic_, 10);
   }
@@ -182,17 +184,52 @@ private:
     bool has_robot_pose = false;
     size_t field_points_count = 0;
     if (has_world) {
-      geometry_msgs::msg::PoseArray detected_points_in_field;
-      detected_points_in_field.header.stamp = now();
-      detected_points_in_field.header.frame_id = field_frame_;
+      visualization_msgs::msg::MarkerArray detected_markers;
 
       for (size_t i = 0; i < ids.size(); ++i) {
         const auto tf_camera_marker = omnibot_cv::toTransform(rvecs[i], tvecs[i]);
         const auto tf_field_marker = tf_field_camera * tf_camera_marker;
-        detected_points_in_field.poses.push_back(omnibot_cv::toPose(tf_field_marker));
+
+        visualization_msgs::msg::Marker point_marker;
+        point_marker.header.stamp = msg->header.stamp;
+        point_marker.header.frame_id = field_frame_;
+        point_marker.ns = "detected_markers_field_points";
+        point_marker.id = ids[i];
+        point_marker.type = visualization_msgs::msg::Marker::SPHERE;
+        point_marker.action = visualization_msgs::msg::Marker::ADD;
+        point_marker.pose = omnibot_cv::toPose(tf_field_marker);
+        point_marker.scale.x = marker_length_ * 0.30;
+        point_marker.scale.y = marker_length_ * 0.30;
+        point_marker.scale.z = marker_length_ * 0.30;
+        point_marker.color.r = 0.1F;
+        point_marker.color.g = 1.0F;
+        point_marker.color.b = 0.2F;
+        point_marker.color.a = 1.0F;
+        point_marker.lifetime.sec = 0;
+        point_marker.lifetime.nanosec = 300000000;
+        detected_markers.markers.push_back(point_marker);
+
+        visualization_msgs::msg::Marker text_marker;
+        text_marker.header.stamp = msg->header.stamp;
+        text_marker.header.frame_id = field_frame_;
+        text_marker.ns = "detected_markers_field_ids";
+        text_marker.id = 100000 + ids[i];
+        text_marker.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
+        text_marker.action = visualization_msgs::msg::Marker::ADD;
+        text_marker.pose = point_marker.pose;
+        text_marker.pose.position.z += marker_length_ * 0.35;
+        text_marker.scale.z = marker_length_ * 0.45;
+        text_marker.color.r = 1.0F;
+        text_marker.color.g = 1.0F;
+        text_marker.color.b = 1.0F;
+        text_marker.color.a = 1.0F;
+        text_marker.text = std::to_string(ids[i]);
+        text_marker.lifetime.sec = 0;
+        text_marker.lifetime.nanosec = 300000000;
+        detected_markers.markers.push_back(text_marker);
       }
-      field_points_count = detected_points_in_field.poses.size();
-      field_points_pub_->publish(detected_points_in_field);
+      field_points_count = ids.size();
+      detected_markers_pub_->publish(detected_markers);
 
       const auto tf_camera_field = tf_field_camera.inv();
       cv::Vec3d world_rvec;
@@ -303,7 +340,7 @@ private:
   std::string field_frame_;
   std::string debug_image_topic_;
   std::string detections_text_topic_;
-  std::string field_points_topic_;
+  std::string detected_markers_topic_;
 
   double marker_length_{};
   int robot_marker_id_{};
@@ -319,7 +356,7 @@ private:
   rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr info_sub_;
   rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr markers_pub_;
   rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr robot_pub_;
-  rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr field_points_pub_;
+  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr detected_markers_pub_;
   rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr debug_image_pub_;
   rclcpp::Publisher<std_msgs::msg::String>::SharedPtr detections_text_pub_;
 };

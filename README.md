@@ -269,7 +269,7 @@ ros2 launch omnibot_bringup robot.launch.py robot_calibration_yaml:=file:///tmp/
    - `/tf`, `/scan`, `/map`
 - `Raw Messages`:
    - `/odom`, `/cmd_vel`, `/aruco/robot_pose`
-   - `/aruco/detected_points_field`
+   - `/aruco/detected_markers_field`
 - `Image`:
    - `/robot/camera/image_raw`
    - `/station/camera/image_undistorted`
