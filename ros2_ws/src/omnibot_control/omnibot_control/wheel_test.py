@@ -87,9 +87,7 @@ def main() -> None:
 
     pca = PCA9685(bus_num=1, address=0x40, pwm_hz=1000)
 
-    chip_name = resolve_gpiochip()
-    print(f'Using GPIO chip: {chip_name}')
-    chip = gpiod.Chip(chip_name)
+    chip = gpiod.Chip('gpiochip4')
     lines: Dict[int, object] = {}
 
     def request(pin: int):
