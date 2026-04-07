@@ -10,8 +10,8 @@
 
 #include <lgpio.h>
 
-#include "rclcpp/rclcpp.hpp"
-#include "std_msgs/msg/int32_multi_array.hpp"
+// #include "rclcpp/rclcpp.hpp"
+// #include "std_msgs/msg/int32_multi_array.hpp"
 
 // Quadrature decode lookup table (4x).
 // Index = (prev_ab << 2) | curr_ab  where ab = (A<<1)|B
