@@ -67,37 +67,37 @@ class ActuatorNode(Node):
             raise
     
         self.chip = lgpio.gpiochip_open(gpio_chip)
-        for motor_cfg in motors_cfg:
-            lgpio.gpio_claim_output(self.chip, motor_cfg['in1'])
-            lgpio.gpio_claim_output(self.chip, motor_cfg['in2'])
-        
-        self.motors = [
-            MotorControl(pwm_channel=m['pwm_ch'], pin_a=m['in1'], pin_b=m['in2'], pca=self.pca, chip=self.chip)
-            for m in motors_cfg
-        ]
-
-        self.servos = [
-            servo.Servo(pwm_out=self.pca.channels[s['channel']], actuation_range=160, min_pulse=s['min_pulse'], max_pulse=s['max_pulse'])
-            for s in servos_cfg
-        ]
-        # lgpio.gpio_claim_output(self.chip, 5)
-        # lgpio.gpio_claim_output(self.chip, 6)
-        # lgpio.gpio_claim_output(self.chip, 17)
-        # lgpio.gpio_claim_output(self.chip, 22)
-        # lgpio.gpio_claim_output(self.chip, 26)
-        # lgpio.gpio_claim_output(self.chip, 27)
+        # for motor_cfg in motors_cfg:
+        #     lgpio.gpio_claim_output(self.chip, motor_cfg['in1'])
+        #     lgpio.gpio_claim_output(self.chip, motor_cfg['in2'])
         
         # self.motors = [
-        #     MotorControl(pwm_channel=0, pin_a=5, pin_b=6, pca=self.pca, chip=self.chip),
-        #     MotorControl(pwm_channel=1, pin_a=17, pin_b=22, pca=self.pca, chip=self.chip),
-        #     MotorControl(pwm_channel=2, pin_a=26, pin_b=27, pca=self.pca, chip=self.chip),
+        #     MotorControl(pwm_channel=m['pwm_ch'], pin_a=m['in1'], pin_b=m['in2'], pca=self.pca, chip=self.chip)
+        #     for m in motors_cfg
         # ]
 
         # self.servos = [
-        #     servo.Servo(pwm_out=self.pca.channels[4], actuation_range=160),
-        #     servo.Servo(pwm_out=self.pca.channels[5], actuation_range=160),
-        #     servo.Servo(pwm_out=self.pca.channels[6], actuation_range=160)
+        #     servo.Servo(pwm_out=self.pca.channels[s['channel']], actuation_range=160, min_pulse=s['min_pulse'], max_pulse=s['max_pulse'])
+        #     for s in servos_cfg
         # ]
+        lgpio.gpio_claim_output(self.chip, 5)
+        lgpio.gpio_claim_output(self.chip, 6)
+        lgpio.gpio_claim_output(self.chip, 17)
+        lgpio.gpio_claim_output(self.chip, 22)
+        lgpio.gpio_claim_output(self.chip, 26)
+        lgpio.gpio_claim_output(self.chip, 27)
+        
+        self.motors = [
+            MotorControl(pwm_channel=0, pin_a=5, pin_b=6, pca=self.pca, chip=self.chip),
+            MotorControl(pwm_channel=1, pin_a=17, pin_b=22, pca=self.pca, chip=self.chip),
+            MotorControl(pwm_channel=2, pin_a=26, pin_b=27, pca=self.pca, chip=self.chip),
+        ]
+
+        self.servos = [
+            servo.Servo(pwm_out=self.pca.channels[4], actuation_range=160),
+            servo.Servo(pwm_out=self.pca.channels[5], actuation_range=160),
+            servo.Servo(pwm_out=self.pca.channels[6], actuation_range=160)
+        ]
 
         self.sub_motors = self.create_subscription(
             Float32MultiArray,
