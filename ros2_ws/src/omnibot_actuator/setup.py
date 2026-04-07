@@ -25,8 +25,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'run = ' + package_name + '.actuator_node:main',
-            'tester = ' + package_name + '.actuator_test_node:main',
+            'run = omnibot_actuator.actuator_node:main',
+            'tester = omnibot_actuator.actuator_test_node:main',
         ],
     },
 )
