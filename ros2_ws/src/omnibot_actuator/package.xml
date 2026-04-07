@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="3">
-  <name>omnibot_control</name>
+  <name>omnibot_actuator</name>
   <version>0.1.0</version>
   <description>Motor control node for 3-wheel omnibot on Raspberry Pi.</description>
   <maintainer email="makar6002@mail.ru">omnibot</maintainer>

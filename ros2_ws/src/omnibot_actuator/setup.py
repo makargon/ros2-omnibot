@@ -1,6 +1,6 @@
 from setuptools import setup
 
-package_name = 'omnibot_control'
+package_name = 'omnibot_actuator'
 
 setup(
     name=package_name,
@@ -10,12 +10,10 @@ setup(
         ('share/ament_index/resource_index/packages', ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
         ('share/' + package_name + '/launch', [
-            'launch/motor_controller.launch.py',
-            'launch/servo_controller.launch.py',
+            'launch/actuator.launch.py',
         ]),
         ('share/' + package_name + '/config', [
-            'config/motor_controller.yaml',
-            'config/servo_controller.yaml',
+            'config/actuator.yaml',
         ]),
     ],
     install_requires=['setuptools'],
@@ -27,10 +25,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'motor_controller = omnibot_control.motor_controller_node:main',
-            'servo_controller = omnibot_control.servo_controller_node:main',
-            'manual_control = omnibot_control.manual_control:main',
-            'wheel_test = omnibot_control.wheel_test:main',
+            'run = omnibot_actuator.actuator_node:main',
+            'tester = omnibot_actuator.actuator_test_node:main',
         ],
     },
 )

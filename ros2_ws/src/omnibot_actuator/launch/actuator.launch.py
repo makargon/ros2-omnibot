@@ -6,15 +6,15 @@ import os
 
 
 def generate_launch_description() -> LaunchDescription:
-    pkg_share = get_package_share_directory('omnibot_control')
-    params_file = os.path.join(pkg_share, 'config', 'servo_controller.yaml')
+    pkg_share = get_package_share_directory('omnibot_actuator')
+    params_file = os.path.join(pkg_share, 'config', 'actuator.yaml')
 
-    servo_controller = Node(
-        package='omnibot_control',
-        executable='servo_controller',
-        name='servo_controller',
+    actuator_node = Node(
+        package='omnibot_actuator',
+        executable='actuator_node',
+        name='actuator_node',
         output='screen',
         parameters=[ParameterFile(params_file, allow_substs=True)],
     )
 
-    return LaunchDescription([servo_controller])
+    return LaunchDescription([actuator_node])
