@@ -1,0 +1,101 @@
+version: "3.9"
+
+services:
+  omnibot_ros2:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        ROS_BASE_IMAGE: arm64v8/ros:jazzy-ros-base
+    container_name: omnibot_ros2
+    network_mode: host
+    privileged: true
+    environment:
+      - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+      - ROS_DOMAIN_ID=0
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./ros2_ws:/workspaces/omnibot/ros2_ws
+    working_dir: /workspaces/omnibot/ros2_ws
+    devices:
+      - /dev/gpiochip0:/dev/gpiochip0
+      - /dev/gpiomem:/dev/gpiomem
+      - /dev/i2c-1:/dev/i2c-1
+      - /dev/spidev0.0:/dev/spidev0.0
+      - /dev/spidev0.1:/dev/spidev0.1
+      - /dev/mem:/dev/mem
+    command: >
+      bash -lc "
+      source /opt/ros/jazzy/setup.bash &&
+      colcon build --symlink-install &&
+      source install/setup.bash &&
+      ros2 launch omnibot_control motor_controller.launch.py
+      "
+
+  omnibot_servo:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        ROS_BASE_IMAGE: arm64v8/ros:jazzy-ros-base
+    container_name: omnibot_servo
+    network_mode: host
+    privileged: true
+    environment:
+      - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+      - ROS_DOMAIN_ID=0
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./ros2_ws:/workspaces/omnibot/ros2_ws
+    working_dir: /workspaces/omnibot/ros2_ws
+    devices:
+      - /dev/gpiochip0:/dev/gpiochip0
+      - /dev/gpiomem:/dev/gpiomem
+      - /dev/i2c-1:/dev/i2c-1
+      - /dev/spidev0.0:/dev/spidev0.0
+      - /dev/spidev0.1:/dev/spidev0.1
+      - /dev/mem:/dev/mem
+    depends_on:
+      - omnibot_ros2
+    command: >
+      bash -lc "
+      source /opt/ros/jazzy/setup.bash &&
+      colcon build --symlink-install --packages-select omnibot_control &&
+      source install/setup.bash &&
+      ros2 launch omnibot_control servo_controller.launch.py
+      "
+
+  omnibot_perception:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        ROS_BASE_IMAGE: arm64v8/ros:jazzy-ros-base
+    container_name: omnibot_perception
+    network_mode: host
+    privileged: true
+    environment:
+      - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+      - ROS_DOMAIN_ID=0
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./ros2_ws:/workspaces/omnibot/ros2_ws
+    working_dir: /workspaces/omnibot/ros2_ws
+    devices:
+      - /dev/gpiochip0:/dev/gpiochip0
+      - /dev/gpiomem:/dev/gpiomem
+      - /dev/i2c-1:/dev/i2c-1
+      - /dev/spidev0.0:/dev/spidev0.0
+      - /dev/spidev0.1:/dev/spidev0.1
+      - /dev/mem:/dev/mem
+      - /dev/ttyUSB0:/dev/ttyUSB0  # LIDAR USB device
+      - /dev/ttyUSB1:/dev/ttyUSB1  # Optional: multiple USB devices
+    depends_on:
+      - omnibot_ros2
+    command: >
+      bash -lc "
+      source /opt/ros/jazzy/setup.bash &&
+      colcon build --symlink-install --packages-select omnibot_perception &&
+      source install/setup.bash &&
+      ros2 launch omnibot_perception perception.launch.py foxglove:=true
+      "

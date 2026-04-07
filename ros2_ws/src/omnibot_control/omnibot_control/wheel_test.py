@@ -4,6 +4,12 @@ from dataclasses import dataclass
 from typing import Dict, List
 
 try:
+    from .gpio_compat import resolve_gpiochip
+except Exception:
+    # Allows direct execution: python3 wheel_test.py
+    from gpio_compat import resolve_gpiochip  # type: ignore
+
+try:
     import gpiod  # type: ignore
 except Exception:
     gpiod = None
@@ -77,7 +83,7 @@ class PCA9685:
 
 def main() -> None:
     if gpiod is None:
-        raise RuntimeError('python3-libgpiod is not available in container')
+        raise RuntimeError('gpiod is not available in this Python environment')
 
     pca = PCA9685(bus_num=1, address=0x40, pwm_hz=1000)
 
@@ -103,6 +109,42 @@ def main() -> None:
         if pin in lines:
             lines[pin].set_value(1 if value else 0)
 
+    def read(pin: int):
+        if pin not in lines:
+            return None
+        try:
+            return int(lines[pin].get_value())
+        except Exception:
+            return None
+
+    def gpio_self_check() -> None:
+        print('\nGPIO self-check (toggle 0 -> 1 -> 0):')
+        pins = []
+        for m in MOTORS:
+            pins.append((f'{m.name}.in1', m.in1_gpio))
+            pins.append((f'{m.name}.in2', m.in2_gpio))
+        pins.append(('pca_oe', OE_GPIO))
+
+        for label, pin in pins:
+            write(pin, 0)
+            r0 = read(pin)
+            time.sleep(0.03)
+
+            write(pin, 1)
+            r1 = read(pin)
+            time.sleep(0.03)
+
+            write(pin, 0)
+            r2 = read(pin)
+
+            if r0 is None or r1 is None or r2 is None:
+                print(f'  [WARN] GPIO{pin:>2} ({label}): write OK, readback unavailable on this kernel/driver')
+                continue
+
+            ok = (r0 == 0 and r1 == 1 and r2 == 0)
+            status = 'OK' if ok else 'MISMATCH'
+            print(f'  [{status}] GPIO{pin:>2} ({label}): readback {r0}->{r1}->{r2}')
+
     try:
         # Request IN lines (mandatory)
         for m in MOTORS:
@@ -112,6 +154,8 @@ def main() -> None:
         # Enable PCA9685 outputs (OE is active-low)
         request(OE_GPIO)
         write(OE_GPIO, 0)
+
+        gpio_self_check()
 
         # PWM lines are optional because PWM0/1/2 may not be gpiochip offsets.
         def stop_all():

@@ -1,12 +1,15 @@
-# Omnibot ROS 2 Humble (Docker, Raspberry Pi)
+# Omnibot ROS 2 jazzy (Docker, Raspberry Pi)
 
-Скелет проекта для ROS 2 Humble в Docker с нодой управления 3-мя моторами омнибота.
+Скелет проекта для ROS 2 jazzy в Docker с нодой управления 3-мя моторами омнибота.
 
 ## Структура
 
-- `docker/Dockerfile` — образ ROS 2 Humble для Raspberry Pi (arm64).
-- `docker-compose.yml` — запуск контейнеров с доступом к GPIO/SPI/I2C.
-- `ros2_ws/src/omnibot_control` — ROS 2 пакет (`ament_python`) с нодой `motor_controller`.
+- `docker/Dockerfile` — образ ROS 2 jazzy для Raspberry Pi (arm64).
+- `docker-compose.yml` — запуск контейнеров с доступом к GPIO/SPI/I2C и USB.
+- `ros2_ws/src/omnibot_control` — ROS 2 пакет управления моторами.
+- `ros2_ws/src/omnibot_perception` — ROS 2 пакет для LIDAR и SLAM.
+- `ros2_ws/src/omnibot_cv` — ROS 2 пакет CV (камера, undistort, ArUco локализация).
+- `ros2_ws/src/omnibot_bringup` — общий пакет launch-оркестрации.
 
 ## Нода motor_controller
 
@@ -22,6 +25,109 @@
 - Подписка: `/servo_angles_deg` (`std_msgs/Float32MultiArray`)
 - Формат: `[servo4_deg, servo5_deg, servo6_deg]`
 - Также принимает одиночные топики: `/servo4_deg`, `/servo5_deg`, `/servo6_deg` (`std_msgs/Float32`)
+
+## Пакет omnibot_perception — LIDAR и SLAM
+
+Новый пакет для работы с RPLiDAR A1M8 и создания карт робота в реальном времени.
+
+### Узлы perception
+
+1. **rplidar_node** — драйвер лидара (используется стандартный пакет `rplidar_ros`)
+   - Публикация: `/scan` (`sensor_msgs/LaserScan`)
+   - Подключение: USB (`/dev/ttyUSB0`, по умолчанию)
+   - Скорость сканирования: 5.5 Hz (A1M8)
+   - Дальность: 0.15-12 м
+
+2. **tf_broadcaster** — трансляция фреймов робота
+   - Публикация трансформов: `odom` → `base_link` → `lidar_link`
+   - Позиция лидара относительно робота (x, y, z)
+
+3. **slam_toolbox** — SLAM (одновременная локализация и картирование)
+   - Принимает: `/scan`, `/odom`
+   - Публикует: `/map`, `/map_metadata`
+   - Создание и обновление карты в реальном времени
+   - Сохранение/загрузка карт
+
+### Запуск perception
+
+**На робота (RPI 5 в Docker):**
+```bash
+docker compose up omnibot_perception
+```
+
+Это запустит лидар, SLAM и Foxglove Bridge на RPI.
+
+**На отдельном устройстве (для визуализации):**
+
+1. Убедитесь, что оба устройства в одной сети
+2. Откройте Foxglove Desktop (или web-версию)
+3. Подключитесь к WebSocket:
+   - `ws://<IP_RPI>:8765`
+   - пример: `ws://192.168.1.42:8765`
+
+Foxglove получит топики `/scan`, `/map`, `/tf`, `/odom` через `foxglove_bridge`.
+
+### Конфигурация LIDAR
+
+Параметры в `ros2_ws/src/omnibot_perception/config/lidar.yaml`:
+- `port`: `/dev/ttyUSB0` (изменить если лидар на другом порту)
+- `baudrate`: `115200` (стандарт RPLiDAR A1M8)
+- `frame_id`: `lidar_link`
+- `angle_min/max`: полный оборот (−π до +π)
+- `range_min/max`: 0.15–12 м
+
+Проверить доступность лидара:
+```bash
+ls -la /dev/ttyUSB*
+```
+
+Если `/dev/ttyUSB0` не виден, может потребоваться USB-адаптер или другой порт.
+
+### Конфигурация SLAM
+
+Параметры SLAM в `config/slam.yaml`:
+- `resolution`: 0.05 м (5 см на пиксель карты)
+- `do_loop_closing`: `true` (закрытие циклов для более точной карты)
+- `loop_search_max_linear_radius`: 3 м
+- `scan_matcher_variance`: точность сопоставления сканов
+
+### Сетевое взаимодействие
+
+Для визуализации на удалённом устройстве:
+
+**На RPI в docker-compose.yml:**
+```yaml
+environment:
+  - ROS_DOMAIN_ID=0
+  - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+```
+
+**На клиентском устройстве (Foxglove):**
+- ROS 2 устанавливать не обязательно
+- Достаточно открыть `ws://<IP_RPI>:8765`
+
+Убедитесь, что:
+1. Оба устройства в одной подсети (например, `192.168.1.0/24`)
+2. Порт `8765/TCP` открыт
+3. Firewall не блокирует входящие на RPI для `foxglove_bridge`
+
+### Сохранение и загрузка карт
+
+**Сохранить карту:**
+```bash
+docker exec -it omnibot_perception bash -lc "
+source /opt/ros/jazzy/setup.bash &&
+source /workspaces/omnibot/ros2_ws/install/setup.bash &&
+ros2 run slam_toolbox serialize_map -f /tmp/my_map
+"
+```
+
+**Загрузить карту:**
+Отредактировать `config/slam.yaml`:
+```yaml
+map_file_name: '/tmp/my_map'
+use_saved_map: true
+```
 
 ## Назначение пинов
 
@@ -69,6 +175,111 @@ PCA9685:
 Контейнер соберёт `colcon` workspace и запустит launch-файл:
 - `ros2 launch omnibot_control motor_controller.launch.py`
 
+## Общие launch-сценарии
+
+### 1) Робот (моторы + сервы + лидар + камера)
+```bash
+ros2 launch omnibot_bringup robot.launch.py
+```
+
+### 2) Вычислительная станция (камера + CV)
+```bash
+ros2 launch omnibot_bringup station.launch.py
+```
+
+### 3) Задание (placeholder)
+```bash
+ros2 launch omnibot_bringup mission.launch.py
+```
+
+## Калибровка камеры
+
+### 1) Захват кадров шахматной доски
+
+```bash
+docker exec -it omnibot_ros2 bash -lc "
+source /opt/ros/jazzy/setup.bash &&
+source /workspaces/omnibot/ros2_ws/install/setup.bash &&
+ros2 run omnibot_cv capture_calibration_frames.py \
+   --device /dev/video0 \
+   --out-dir /tmp/calib_frames \
+   --pattern-cols 8 --pattern-rows 5
+"
+```
+
+Для headless-режима (без окна OpenCV):
+
+```bash
+docker exec -it omnibot_ros2 bash -lc "
+source /opt/ros/jazzy/setup.bash &&
+source /workspaces/omnibot/ros2_ws/install/setup.bash &&
+ros2 run omnibot_cv capture_calibration_frames.py \
+   --device /dev/video0 \
+   --out-dir /tmp/calib_frames \
+   --pattern-cols 8 --pattern-rows 5 \
+   --no-gui
+"
+```
+
+- соберите 20–40 кадров;
+- меняйте угол и расстояние до доски;
+- доска должна быть видна почти до краёв кадра.
+
+### 2) Калибровка по кадрам
+
+```bash
+docker exec -it omnibot_ros2 bash -lc "
+source /opt/ros/jazzy/setup.bash &&
+source /workspaces/omnibot/ros2_ws/install/setup.bash &&
+cd /tmp &&
+ros2 run omnibot_cv calibrate_camera.py \
+   --images 'calib_frames/*.png' \
+   --pattern-cols 9 --pattern-rows 6 \
+   --square-size-m 0.030 \
+   --output station_camera.yaml
+"
+```
+
+### 3) Подключение к launch
+
+Укажи calibration-файл аргументом launch:
+
+```bash
+ros2 launch omnibot_bringup station.launch.py station_calibration_yaml:=file:///tmp/station_camera.yaml
+```
+
+Для камеры на роботе аналогично:
+
+```bash
+ros2 launch omnibot_bringup robot.launch.py robot_calibration_yaml:=file:///tmp/robot_camera.yaml
+```
+
+## Визуализация в Foxglove
+
+### Быстрый старт
+
+1. Запусти робота:
+    - `ros2 launch omnibot_bringup robot.launch.py with_foxglove:=true foxglove_port:=8765`
+2. Открой Foxglove Desktop.
+3. Подключись к WebSocket: `ws://<IP_РОБОТА>:8765`.
+
+### Что я обычно добавляю в layout
+
+- `3D`:
+   - `/tf`, `/scan`, `/map`
+- `Raw Messages`:
+   - `/odom`, `/cmd_vel`, `/aruco/robot_pose`
+   - `/aruco/detected_markers_field`
+- `Image`:
+   - `/robot/camera/image_raw`
+   - `/station/camera/image_undistorted`
+
+### Проверка сети
+
+- одинаковый `ROS_DOMAIN_ID` на узлах;
+- устройства в одной подсети;
+- открыт порт `8765/tcp`.
+
 ## Важно
 
 - Используется **PCA9685 по I2C** для PWM и **libgpiod** для IN1/IN2/OE.
@@ -89,25 +300,29 @@ PCA9685:
 
 ### Быстрый тест колёс (по очереди)
 
-- `docker exec -it omnibot_ros2 bash -lc "source /opt/ros/humble/setup.bash && cd /workspaces/omnibot/ros2_ws && colcon build --symlink-install --packages-select omnibot_control && source install/setup.bash && ros2 run omnibot_control wheel_test"`
+- `docker exec -it omnibot_ros2 bash -lc "source /opt/ros/jazzy/setup.bash && cd /workspaces/omnibot/ros2_ws && colcon build --symlink-install --packages-select omnibot_control && source install/setup.bash && ros2 run omnibot_control wheel_test"`
 
 ### Запуск servo_controller
 
-- `docker exec -it omnibot_ros2 bash -lc "source /opt/ros/humble/setup.bash && cd /workspaces/omnibot/ros2_ws && colcon build --symlink-install --packages-select omnibot_control && source install/setup.bash && ros2 launch omnibot_control servo_controller.launch.py"`
+- `docker exec -it omnibot_ros2 bash -lc "source /opt/ros/jazzy/setup.bash && cd /workspaces/omnibot/ros2_ws && colcon build --symlink-install --packages-select omnibot_control && source install/setup.bash && ros2 launch omnibot_control servo_controller.launch.py"`
 
 Пример команды на сервы:
-- `docker exec -it omnibot_ros2 bash -lc "source /opt/ros/humble/setup.bash && source /workspaces/omnibot/ros2_ws/install/setup.bash && ros2 topic pub /servo_angles_deg std_msgs/msg/Float32MultiArray '{data: [90.0, 45.0, 135.0]}' -1"`
+- `docker exec -it omnibot_ros2 bash -lc "source /opt/ros/jazzy/setup.bash && source /workspaces/omnibot/ros2_ws/install/setup.bash && ros2 topic pub /servo_angles_deg std_msgs/msg/Float32MultiArray '{data: [90.0, 45.0, 135.0]}' -1"`
 
 Одиночный канал (например PWM4):
-- `docker exec -it omnibot_ros2 bash -lc "source /opt/ros/humble/setup.bash && source /workspaces/omnibot/ros2_ws/install/setup.bash && ros2 topic pub /servo4_deg std_msgs/msg/Float32 '{data: 120.0}' -1"`
+- `docker exec -it omnibot_ros2 bash -lc "source /opt/ros/jazzy/setup.bash && source /workspaces/omnibot/ros2_ws/install/setup.bash && ros2 topic pub /servo4_deg std_msgs/msg/Float32 '{data: 120.0}' -1"`
 
 ### Docker Compose сервисы
 
 - `omnibot_ros2` — запускает `motor_controller`
 - `omnibot_servo` — запускает `servo_controller`
+- `omnibot_perception` — запускает LIDAR, SLAM и `foxglove_bridge`
 
-Запуск обоих:
-- `docker compose up -d omnibot_ros2 omnibot_servo`
+Запуск всех сервисов:
+- `docker compose up -d`
+
+Запуск только perception:
+- `docker compose up omnibot_perception`
 
 ### Ручное управление с клавиатуры
 
@@ -120,7 +335,7 @@ PCA9685:
 - Space или X — стоп движения
 
 Запуск:
-- `docker exec -it omnibot_ros2 bash -lc "source /opt/ros/humble/setup.bash && cd /workspaces/omnibot/ros2_ws && colcon build --symlink-install --packages-select omnibot_control && source install/setup.bash && ros2 run omnibot_control manual_control"`
+- `docker exec -it omnibot_ros2 bash -lc "source /opt/ros/jazzy/setup.bash && cd /workspaces/omnibot/ros2_ws && colcon build --symlink-install --packages-select omnibot_control && source install/setup.bash && ros2 run omnibot_control manual_control"`
 
 ### Калибровка кинематики
 

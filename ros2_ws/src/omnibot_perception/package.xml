@@ -1,20 +1,28 @@
 <?xml version="1.0"?>
 <package format="3">
-  <name>omnibot_control</name>
+  <name>omnibot_perception</name>
   <version>0.1.0</version>
-  <description>Motor control node for 3-wheel omnibot on Raspberry Pi.</description>
+  <description>LIDAR and SLAM perception package for omnibot using RPLiDAR A1M8.</description>
   <maintainer email="makar6002@mail.ru">omnibot</maintainer>
   <license>MIT</license>
 
   <buildtool_depend>ament_python</buildtool_depend>
 
   <depend>rclpy</depend>
+  <depend>sensor_msgs</depend>
+  <depend>tf2</depend>
+  <depend>tf2_ros</depend>
+  <depend>nav_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>std_msgs</depend>
 
   <exec_depend>launch</exec_depend>
   <exec_depend>launch_ros</exec_depend>
   <exec_depend>ament_index_python</exec_depend>
+  <exec_depend>rplidar_ros</exec_depend>
+  <exec_depend>slam_toolbox</exec_depend>
+  <exec_depend>foxglove_bridge</exec_depend>
+  <exec_depend>nav2_map_server</exec_depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
