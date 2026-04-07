@@ -10,8 +10,8 @@
 
 #include <lgpio.h>
 
-// #include "rclcpp/rclcpp.hpp"
-// #include "std_msgs/msg/int32_multi_array.hpp"
+#include "rclcpp/rclcpp.hpp"
+#include "std_msgs/msg/int32_multi_array.hpp"
 
 // Quadrature decode lookup table (4x).
 // Index = (prev_ab << 2) | curr_ab  where ab = (A<<1)|B
@@ -46,38 +46,34 @@ private:
 };
 
 
-// class EncoderNode : public rclcpp::Node {
-// public:
-//     EncoderNode();
-//     ~EncoderNode();
+class EncoderNode : public rclcpp::Node {
+public:
+    EncoderNode();
+    ~EncoderNode();
 
-// private:
-//     void timer_callback();
-//     void init_encoders();
+private:
+    void timer_callback();
+    void init_encoders();
 
-//     int gpio_handle_;
+    int gpio_handle_;
     
-//     // Encoder instances
-//     std::unique_ptr<RotaryEncoder> encoder1_;
-//     std::unique_ptr<RotaryEncoder> encoder2_;
-//     std::unique_ptr<RotaryEncoder> encoder3_;
+    std::unique_ptr<RotaryEncoder> encoder1_;
+    std::unique_ptr<RotaryEncoder> encoder2_;
+    std::unique_ptr<RotaryEncoder> encoder3_;
     
-//     // Encoder configuration
-//     struct EncoderPins {
-//         int pin_a;
-//         int pin_b;
-//         int cpr;
-//     };
+    struct EncoderPins {
+        int pin_a;
+        int pin_b;
+        int cpr;
+    };
     
-//     std::vector<EncoderPins> encoder_configs_;
+    std::vector<EncoderPins> encoder_configs_;
     
-//     // ROS2 components
-//     rclcpp::Publisher<std_msgs::msg::Int32MultiArray>::SharedPtr publisher_;
-//     rclcpp::TimerBase::SharedPtr timer_;
-// };
+    rclcpp::Publisher<std_msgs::msg::Int32MultiArray>::SharedPtr publisher_;
+    rclcpp::TimerBase::SharedPtr timer_;
+};
 
 // extern std::atomic<bool> running;
-
 // void signal_handler(int signal);
 
 #endif

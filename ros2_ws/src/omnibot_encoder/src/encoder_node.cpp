@@ -1,20 +1,18 @@
-#include "omnibot_encoder/encoder_node.hpp"
-
+#include <lgpio.h>
+#include <atomic>
+#include <cstdint>
+#include <cmath>
 #include <iostream>
 #include <chrono>
 #include <thread>
 #include <csignal>
 #include <cstring>
 
-// #include "rclcpp/rclcpp.hpp"
-// #include "std_msgs/msg/string.hpp"
+#include "rclcpp/rclcpp.hpp"
+#include "std_msgs/msg/string.hpp"
 
-// #include <lgpio.h>
-// #include <atomic>
-// #include <cstdint>
-// #include <cmath>
 
-// using namespace std::chrono_literals;
+using namespace std::chrono_literals;
 
 std::atomic<bool> running{true};
 
@@ -156,79 +154,107 @@ void RotaryEncoder::on_edge(int gpio, int level) {
 //     int prev_ab_{0};
 // };
 
-// // class EncoderNode : public rclcpp::Node {
-// // public:
-// //     EncoderNode()
-// //     : Node("encoder") {
-// //         handle_ = lgGpiochipOpen(4)
+class EncoderNode : public rclcpp::Node {
+public:
+    EncoderNode()
+    : Node("encoder_node") {
+        handle_ = lgGpiochipOpen(4)
+
+        this->declare_parameter("encoder1.pin_a", 10);
+        this->declare_parameter("encoder1.pin_b", 9);
+        this->declare_parameter("encoder1.cpr", 390);
+
+        this->declare_parameter("encoder2.pin_a", 11);
+        this->declare_parameter("encoder2.pin_b", 8);
+        this->declare_parameter("encoder2.cpr", 390);
+
+        this->declare_parameter("encoder3.pin_a", 12);
+        this->declare_parameter("encoder3.pin_b", 7);
+        this->declare_parameter("encoder3.cpr", 390);
+
+        int e1a = this->get_parameter("encoder1.pin_a").as_int();
+        int e1b = this->get_parameter("encoder1.pin_b").as_int();
+        int e1cpr = this->get_parameter("encoder1.cpr").as_int();
+
+        int e2a = this->get_parameter("encoder2.pin_a").as_int();
+        int e2b = this->get_parameter("encoder2.pin_b").as_int();
+        int e2cpr = this->get_parameter("encoder2.cpr").as_int();
+
+        int e3a = this->get_parameter("encoder3.pin_a").as_int();
+        int e3b = this->get_parameter("encoder3.pin_b").as_int();
+        int e3cpr = this->get_parameter("encoder3.cpr").as_int();
 
 
-// //         encoders_.push_back(std::make_unique<EncoderReader>(e1a, e1b));
-// //         encoders_.push_back(std::make_unique<EncoderReader>(e2a, e2b));
-// //         encoders_.push_back(std::make_unique<EncoderReader>(e3a, e3b));
+        encoders_.push_back(std::make_unique<RotaryEncoder>(handle_, e1a, e1b, e1cpr));
+        encoders_.push_back(std::make_unique<RotaryEncoder>(handle_, e2a, e2b, e2cpr));
+        encoders_.push_back(std::make_unique<RotaryEncoder>(handle_, e3a, e3b, e3cpr));
 
-// //         publisher_ = this->create_publisher<std_msgs::msg::Int32MultiArray>("/encoder_ticks", 10);
+        publisher_ = this->create_publisher<std_msgs::msg::Int32MultiArray>("/encoder_ticks", 10);
 
-// //         timer_ = this->create_wall_timer(std::chrono::milliseconds(20),
-// //                                          std::bind(&EncoderNode::timerCallback, this));
+        timer_ = this->create_wall_timer(std::chrono::milliseconds(20), std::bind(&EncoderNode::timerCallback, this));
 
-// //         RCLCPP_INFO(this->get_logger(), "Encoder Node запущена. Публикуем в /encoder_ticks");
-// //     }
-
-// //     ~EncoderNode() {
-// //         lgGpiochipClose(4);
-// //     }
-
-// // private:
-// //     void timerCallback() {
-// //         auto msg = std_msgs::msg::Int32MultiArray();
-// //         msg.data.resize(3);
-// //         for (size_t i = 0; i < encoders_.size(); ++i) {
-// //             msg.data[i] = encoders_[i]->read();
-// //         }
-// //         publisher_->publish(msg);
-// //     }
-
-// //     std::vector<std::unique_ptr<EncoderReader>> encoders_;
-// //     rclcpp::Publisher<std_msgs::msg::Int32MultiArray>::SharedPtr publisher_;
-// //     rclcpp::TimerBase::SharedPtr timer_;
-// // };
-
-// // int main(int argc, char** argv) {
-// //     rclcpp::init(argc, argv);
-// //     auto node = std::make_shared<EncoderNode>();
-// //     rclcpp::spin(node);
-// //     rclcpp::shutdown();
-// //     return 0;
-// // }
-
-int main() {
-    std::signal(SIGINT, signal_handler);
-
-    int handle = lgGpiochipOpen(4);
-
-    const int PIN_A = 10;
-    const int PIN_B = 9;
-    const int CPR   = 390;
-
-    try {
-        RotaryEncoder encoder(handle, PIN_A, PIN_B, CPR);
-        std::cout << "=== Rotary Encoder Test (real hardware) ===" << std::endl;
-        std::cout << "GPIO_A=" << PIN_A << " GPIO_B=" << PIN_B << " CPR=" << CPR << std::endl;
-        std::cout << "Rotate the encoder. Press Ctrl+C to stop.\n" << std::endl;
-
-        while (running) {
-            int64_t cnt = encoder.count();
-            float angle = encoder.angle_deg();
-            std::cout << "\rCount: " << cnt << "   Angle: " << angle << " deg   " << std::flush;
-            std::this_thread::sleep_for(std::chrono::milliseconds(50));
-        }
-        std::cout << std::endl << "Test finished." << std::endl;
-    } catch (const std::exception& e) {
-        std::cerr << "Error: " << e.what() << std::endl;
-        lgGpiochipClose(handle);
-        return 1;
+        RCLCPP_INFO(this->get_logger(), "Encoder Node запущена. Публикуем в /encoder_ticks");
     }
 
-    lgGpiochipClose(handle);
+    ~EncoderNode() {
+        lgGpiochipClose(4);
+    }
+
+private:
+    void timerCallback() {
+        auto msg = std_msgs::msg::Int32MultiArray();
+        msg.data.resize(3);
+        for (size_t i = 0; i < encoders_.size(); ++i) {
+            msg.data[i] = encoders_[i]->read();
+        }
+        publisher_->publish(msg);
+    }
+
+    std::vector<std::unique_ptr<EncoderReader>> encoders_;
+    rclcpp::Publisher<std_msgs::msg::Int32MultiArray>::SharedPtr publisher_;
+    rclcpp::TimerBase::SharedPtr timer_;
+};
+
+int main(int argc, char** argv) {
+    rclcpp::init(argc, argv);
+    auto node = std::make_shared<EncoderNode>();
+    rclcpp::spin(node);
+    rclcpp::shutdown();
+    return 0;
 }
+
+
+
+// TEST
+
+
+// int main() {
+//     std::signal(SIGINT, signal_handler);
+
+//     int handle = lgGpiochipOpen(4);
+
+//     const int PIN_A = 10;
+//     const int PIN_B = 9;
+//     const int CPR   = 390;
+
+//     try {
+//         RotaryEncoder encoder(handle, PIN_A, PIN_B, CPR);
+//         std::cout << "=== Rotary Encoder Test (real hardware) ===" << std::endl;
+//         std::cout << "GPIO_A=" << PIN_A << " GPIO_B=" << PIN_B << " CPR=" << CPR << std::endl;
+//         std::cout << "Rotate the encoder. Press Ctrl+C to stop.\n" << std::endl;
+
+//         while (running) {
+//             int64_t cnt = encoder.count();
+//             float angle = encoder.angle_deg();
+//             std::cout << "\rCount: " << cnt << "   Angle: " << angle << " deg   " << std::flush;
+//             std::this_thread::sleep_for(std::chrono::milliseconds(50));
+//         }
+//         std::cout << std::endl << "Test finished." << std::endl;
+//     } catch (const std::exception& e) {
+//         std::cerr << "Error: " << e.what() << std::endl;
+//         lgGpiochipClose(handle);
+//         return 1;
+//     }
+
+//     lgGpiochipClose(handle);
+// }
