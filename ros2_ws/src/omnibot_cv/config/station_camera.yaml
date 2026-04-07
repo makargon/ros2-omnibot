@@ -1,0 +1,6 @@
+/**:
+  ros__parameters:
+    video_device: /dev/video2
+    camera_frame_id: station_camera_optical_frame
+    image_size: [1280, 720]
+    pixel_format: YUYV

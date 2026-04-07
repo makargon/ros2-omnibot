@@ -18,9 +18,9 @@ setup(
     ],
     install_requires=['setuptools'],
     zip_safe=True,
-    maintainer='omnibot',
-    maintainer_email='maintainer@example.com',
-    description='Actuator control node for 3-wheel omnibot.',
+    maintainer='makarGon',
+    maintainer_email='makar6002@mail.ru',
+    description='Motor control node for 3-wheel omnibot.',
     license='MIT',
     tests_require=['pytest'],
     entry_points={

@@ -1,0 +1,16 @@
+aruco_pose_node:
+  ros__parameters:
+    field_frame: aruco_field
+    image_topic: /station/camera/image_undistorted
+    camera_info_topic: /station/camera/camera_info
+    marker_length_m: 0.01
+    aruco_dictionary: DICT_4X4_100
+    robot_marker_id: 10
+    world_pose_smoothing_alpha: 0.22
+    world_pose_hold_frames: 12
+    world_pose_min_markers: 2
+    world_pose_max_reproj_error_px: 8.0
+    marker_ids: [20, 21, 22, 23]
+    marker_x_m: [0.55, 2.45, 0.55, 2.45]
+    marker_y_m: [-0.55, -0.55, -1.45, -1.45]
+    marker_yaw_rad: [0.0, 0.0, 0.0, 0.0]

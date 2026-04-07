@@ -1,0 +1,16 @@
+# RPLiDAR A1M8 Configuration
+rplidar_node:
+  ros__parameters:
+    # Serial port and baudrate
+    port: "/dev/ttyUSB0"
+    baudrate: 115200
+    
+    # Frame and topic names
+    frame_id: "lidar_link"
+    
+    # Scan parameters
+    angle_min: -3.14159  # -180 degrees
+    angle_max: 3.14159   # +180 degrees
+    range_min: 0.15      # 15 cm minimum range
+    range_max: 12.0      # 12 m maximum range
+    scan_time: 0.1       # 100 ms per scan
