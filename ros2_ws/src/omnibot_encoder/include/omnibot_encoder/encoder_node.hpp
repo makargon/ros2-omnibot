@@ -2,20 +2,16 @@
 #define OMNIBOT_ENCODER__ENCODER_NODE_HPP_
 
 #include <atomic>
-#include <chrono>
+#include <cstdint>
 #include <memory>
 #include <vector>
-#include <csignal>
-#include <cstdint>
 
 #include <lgpio.h>
 
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/int32_multi_array.hpp"
 
-// Quadrature decode lookup table (4x).
-// Index = (prev_ab << 2) | curr_ab  where ab = (A<<1)|B
-// +1 = forward, -1 = reverse, 0 = no change or error
+// Quadrature decode lookup table
 static const int8_t QEM[16] = {
      0, -1, +1,  0,
     +1,  0,  0, -1,
@@ -45,7 +41,6 @@ private:
     int prev_ab_{0};
 };
 
-
 class EncoderNode : public rclcpp::Node {
 public:
     EncoderNode();
@@ -53,27 +48,11 @@ public:
 
 private:
     void timer_callback();
-    void init_encoders();
 
     int gpio_handle_;
-    
-    std::unique_ptr<RotaryEncoder> encoder1_;
-    std::unique_ptr<RotaryEncoder> encoder2_;
-    std::unique_ptr<RotaryEncoder> encoder3_;
-    
-    struct EncoderPins {
-        int pin_a;
-        int pin_b;
-        int cpr;
-    };
-    
-    std::vector<EncoderPins> encoder_configs_;
-    
+    std::vector<std::unique_ptr<RotaryEncoder>> encoders_;
     rclcpp::Publisher<std_msgs::msg::Int32MultiArray>::SharedPtr publisher_;
     rclcpp::TimerBase::SharedPtr timer_;
 };
-
-// extern std::atomic<bool> running;
-// void signal_handler(int signal);
 
 #endif
