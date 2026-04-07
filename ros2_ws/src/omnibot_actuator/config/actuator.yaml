@@ -1,28 +1,28 @@
 actuator_node:
   ros__parameters:
-    motors:
-      - pwm_ch: 0
-        in1: 5
-        in2: 6
-      - pwm_ch: 1
-        in1: 17
-        in2: 22
-      - pwm_ch: 2
-        in1: 26
-        in2: 27
-    servos:
-      - channel: 4
-        name: hand
-        min_pulse: 0.75
-        max_pulse: 2.25
-      - channel: 5
-        name: rotate
-        min_pulse: 0.75
-        max_pulse: 2.25
-      - channel: 6
-        name: grab
-        min_pulse: 0.75
-        max_pulse: 2.25
+    # motors:
+    #   - pwm_ch: 0
+    #     in1: 5
+    #     in2: 6
+    #   - pwm_ch: 1
+    #     in1: 17
+    #     in2: 22
+    #   - pwm_ch: 2
+    #     in1: 26
+    #     in2: 27
+    # servos:
+    #   - channel: 4
+    #     name: hand
+    #     min_pulse: 0.75
+    #     max_pulse: 2.25
+    #   - channel: 5
+    #     name: rotate
+    #     min_pulse: 0.75
+    #     max_pulse: 2.25
+    #   - channel: 6
+    #     name: grab
+    #     min_pulse: 0.75
+    #     max_pulse: 2.25
     
     pca9685:
       address: 0x40
