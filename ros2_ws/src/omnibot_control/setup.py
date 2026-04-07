@@ -33,7 +33,7 @@ setup(
             # 'actuator = omnibot_control.actuator_node:main',
             # 'encoder = omnibot_control.encoder_node:main',
             # 'actuator_tester = omnibot_control.actuator_test_node:main',
-            # 'motor_controller = omnibot_control.motor_controller_node:main',
+            'motor_controller = omnibot_control.motor_controller_node:main',
             # 'servo_controller = omnibot_control.servo_controller_node:main',
             # 'manual_control = omnibot_control.manual_control:main',
             # 'wheel_test = omnibot_control.wheel_test:main',
