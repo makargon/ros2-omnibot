@@ -1,5 +1,5 @@
-# actuator_node:
-#   ros__parameters:
+actuator_node:
+  ros__parameters:
     motors:
       - pwm_ch: 0
         in1: 5

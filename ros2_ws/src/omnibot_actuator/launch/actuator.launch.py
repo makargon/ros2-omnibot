@@ -6,11 +6,11 @@ import os
 
 
 def generate_launch_description() -> LaunchDescription:
-    pkg_share = get_package_share_directory('omnibot_control')
+    pkg_share = get_package_share_directory('omnibot_actuator')
     params_file = os.path.join(pkg_share, 'config', 'actuator.yaml')
 
     actuator_node = Node(
-        package='omnibot_control',
+        package='omnibot_actuator',
         executable='actuator_node',
         name='actuator_node',
         output='screen',
