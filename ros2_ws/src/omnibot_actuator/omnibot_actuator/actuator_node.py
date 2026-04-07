@@ -40,23 +40,23 @@ class ActuatorNode(Node):
         self.declare_parameter('pca9685.frequency', 50)
         self.declare_parameter('gpio_chip', 4)
         
-        self.declare_parameter('motors', [
-            {'pwm_ch': 0, 'in1': 5, 'in2': 6},
-            {'pwm_ch': 1, 'in1': 17, 'in2': 22},
-            {'pwm_ch': 2, 'in1': 26, 'in2': 27}
-        ])
-        self.declare_parameter('servos', [
-            {'channel': 4, 'name': 'hand', 'min_pulse': 0.75, 'max_pulse': 2.25},
-            {'channel': 5, 'name': 'rotate', 'min_pulse': 0.75, 'max_pulse': 2.25},
-            {'channel': 6, 'name': 'grab', 'min_pulse': 0.75, 'max_pulse': 2.25}
-        ])
+        # self.declare_parameter('motors', [
+        #     {'pwm_ch': 0, 'in1': 5, 'in2': 6},
+        #     {'pwm_ch': 1, 'in1': 17, 'in2': 22},
+        #     {'pwm_ch': 2, 'in1': 26, 'in2': 27}
+        # ])
+        # self.declare_parameter('servos', [
+        #     {'channel': 4, 'name': 'hand', 'min_pulse': 0.75, 'max_pulse': 2.25},
+        #     {'channel': 5, 'name': 'rotate', 'min_pulse': 0.75, 'max_pulse': 2.25},
+        #     {'channel': 6, 'name': 'grab', 'min_pulse': 0.75, 'max_pulse': 2.25}
+        # ])
 
 
         pca_addr = int(self.get_parameter('pca9685.address').value)
         pca_frec = int(self.get_parameter('pca9685.frequency').value)
         gpio_chip = int(self.get_parameter('gpio_chip').value)
-        motors_cfg = self.get_parameter('motors').value
-        servos_cfg = self.get_parameter('servos').value
+        # motors_cfg = self.get_parameter('motors').value
+        # servos_cfg = self.get_parameter('servos').value
 
         try:
             self.pca = PCA9685(board.I2C(), address=pca_addr)
@@ -67,37 +67,37 @@ class ActuatorNode(Node):
             raise
     
         self.chip = lgpio.gpiochip_open(gpio_chip)
-        for motor_cfg in motors_cfg:
-            lgpio.gpio_claim_output(self.chip, motor_cfg['in1'])
-            lgpio.gpio_claim_output(self.chip, motor_cfg['in2'])
-        
-        self.motors = [
-            MotorControl(pwm_channel=m['pwm_ch'], pin_a=m['in1'], pin_b=m['in2'], pca=self.pca, chip=self.chip)
-            for m in motors_cfg
-        ]
-
-        self.servos = [
-            servo.Servo(pwm_out=self.pca.channels[s['channel']], actuation_range=160, min_pulse=s['min_pulse'], max_pulse=s['max_pulse'])
-            for s in servos_cfg
-        ]
-        # lgpio.gpio_claim_output(self.chip, 5)
-        # lgpio.gpio_claim_output(self.chip, 6)
-        # lgpio.gpio_claim_output(self.chip, 17)
-        # lgpio.gpio_claim_output(self.chip, 22)
-        # lgpio.gpio_claim_output(self.chip, 26)
-        # lgpio.gpio_claim_output(self.chip, 27)
+        # for motor_cfg in motors_cfg:
+        #     lgpio.gpio_claim_output(self.chip, motor_cfg['in1'])
+        #     lgpio.gpio_claim_output(self.chip, motor_cfg['in2'])
         
         # self.motors = [
-        #     MotorControl(pwm_channel=0, pin_a=5, pin_b=6, pca=self.pca, chip=self.chip),
-        #     MotorControl(pwm_channel=1, pin_a=17, pin_b=22, pca=self.pca, chip=self.chip),
-        #     MotorControl(pwm_channel=2, pin_a=26, pin_b=27, pca=self.pca, chip=self.chip),
+        #     MotorControl(pwm_channel=m['pwm_ch'], pin_a=m['in1'], pin_b=m['in2'], pca=self.pca, chip=self.chip)
+        #     for m in motors_cfg
         # ]
 
         # self.servos = [
-        #     servo.Servo(pwm_out=self.pca.channels[4], actuation_range=160),
-        #     servo.Servo(pwm_out=self.pca.channels[5], actuation_range=160),
-        #     servo.Servo(pwm_out=self.pca.channels[6], actuation_range=160)
+        #     servo.Servo(pwm_out=self.pca.channels[s['channel']], actuation_range=160, min_pulse=s['min_pulse'], max_pulse=s['max_pulse'])
+        #     for s in servos_cfg
         # ]
+        lgpio.gpio_claim_output(self.chip, 5)
+        lgpio.gpio_claim_output(self.chip, 6)
+        lgpio.gpio_claim_output(self.chip, 17)
+        lgpio.gpio_claim_output(self.chip, 22)
+        lgpio.gpio_claim_output(self.chip, 26)
+        lgpio.gpio_claim_output(self.chip, 27)
+        
+        self.motors = [
+            MotorControl(pwm_channel=0, pin_a=5, pin_b=6, pca=self.pca, chip=self.chip),
+            MotorControl(pwm_channel=1, pin_a=17, pin_b=22, pca=self.pca, chip=self.chip),
+            MotorControl(pwm_channel=2, pin_a=26, pin_b=27, pca=self.pca, chip=self.chip),
+        ]
+
+        self.servos = [
+            servo.Servo(pwm_out=self.pca.channels[4], actuation_range=160),
+            servo.Servo(pwm_out=self.pca.channels[5], actuation_range=160),
+            servo.Servo(pwm_out=self.pca.channels[6], actuation_range=160)
+        ]
 
         self.sub_motors = self.create_subscription(
             Float32MultiArray,
