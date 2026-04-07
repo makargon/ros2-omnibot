@@ -28,6 +28,8 @@ services:
       - /dev/video1:/dev/video1
       - /dev/video2:/dev/video2
       - /dev/video3:/dev/video3
+      - /dev/video5:/dev/video4
+      - /dev/video4:/dev/video5
     command: >
       bash -lc "
       source /opt/ros/jazzy/setup.bash &&
