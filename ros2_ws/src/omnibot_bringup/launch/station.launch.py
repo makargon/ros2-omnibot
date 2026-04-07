@@ -58,6 +58,8 @@ def generate_launch_description() -> LaunchDescription:
                 'video_device': LaunchConfiguration('station_camera_device'),
                 'pixel_format': LaunchConfiguration('station_camera_pixel_format'),
                 'io_method': LaunchConfiguration('station_camera_io_method'),
+                'image_width': LaunchConfiguration('station_camera_width'),
+                'image_height': LaunchConfiguration('station_camera_height'),
                 'camera_info_url': LaunchConfiguration('station_calibration_yaml'),
                 'image_topic': LaunchConfiguration('station_camera_topic'),
                 'camera_info_topic': '/station/camera/camera_info',
@@ -66,6 +68,8 @@ def generate_launch_description() -> LaunchDescription:
         LogInfo(msg=['Station camera device: ', LaunchConfiguration('station_camera_device')]),
         LogInfo(msg=['Station camera pixel format: ', LaunchConfiguration('station_camera_pixel_format')]),
         LogInfo(msg=['Station camera io_method: ', LaunchConfiguration('station_camera_io_method')]),
+        LogInfo(msg=['Station camera width: ', LaunchConfiguration('station_camera_width')]),
+        LogInfo(msg=['Station camera height: ', LaunchConfiguration('station_camera_height')]),
         _include(
             'omnibot_cv',
             'aruco_localization.launch.py',

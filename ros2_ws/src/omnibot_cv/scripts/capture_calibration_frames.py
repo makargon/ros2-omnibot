@@ -10,6 +10,14 @@ def main() -> None:
     parser = argparse.ArgumentParser(description='Capture chessboard frames for camera calibration.')
     parser.add_argument('--device', default='/dev/video0', help='Video device path or camera index')
     parser.add_argument('--out-dir', default='calib_frames', help='Directory for saved frames')
+
+    parser.add_argument('--image-width', type=int, default=640, help='Requested frame width, default: 640')
+    parser.add_argument('--image-height', type=int, default=480, help='Requested frame height, default: 480')
+    parser.add_argument(
+        '--pixel-format',
+        default='YUYV',
+        help='Requested pixel format FOURCC (e.g. YUYV, MJPG), default: YUYV',
+    )
     parser.add_argument(
         '--pattern-cols',
         '--corners-x',
@@ -71,6 +79,28 @@ def main() -> None:
 
     if not cap.isOpened():
         raise RuntimeError(f'Cannot open camera: {args.device}')
+
+    if args.image_width > 0:
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, float(args.image_width))
+    if args.image_height > 0:
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, float(args.image_height))
+
+    pixel_format = (args.pixel_format or '').strip().upper()
+    if len(pixel_format) == 4:
+        cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*pixel_format))
+    elif pixel_format:
+        print(f"Warning: invalid --pixel-format '{args.pixel_format}', expected 4 chars (FOURCC).")
+
+    actual_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    actual_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    actual_fourcc_int = int(cap.get(cv2.CAP_PROP_FOURCC))
+    actual_fourcc = ''.join(chr((actual_fourcc_int >> (8 * i)) & 0xFF) for i in range(4)).strip('\x00')
+    print(
+        f'Requested stream: {args.image_width}x{args.image_height}, pixel_format={pixel_format or "(default)"}'
+    )
+    print(
+        f'Negotiated stream: {actual_width}x{actual_height}, pixel_format={actual_fourcc or "unknown"}'
+    )
 
     pattern_size = (args.pattern_cols, args.pattern_rows)
     saved = 0
