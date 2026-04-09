@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="3">
-  <name>omnibot_encoder</name>
+  <name>omnibot_pid_wheel</name>
   <version>0.1.0</version>
-  <description>Omnibot encoder and odometry nodes</description>
+  <description>Node for PID control wheel for omnibot</description>
   <maintainer email="so02s@mail.ru">omnibot</maintainer>
   <license>MIT</license>
 
@@ -10,11 +10,6 @@
 
   <depend>rclcpp</depend>
   <depend>std_msgs</depend>
-  <depend>nav_msgs</depend>
-  <depend>geometry_msgs</depend>
-  <depend>tf2</depend>
-  <depend>tf2_ros</depend>
-  <depend>tf2_geometry_msgs</depend>
 
   <exec_depend>launch</exec_depend>
   <exec_depend>launch_ros</exec_depend>

@@ -1,4 +1,4 @@
-actuator_node:
+kinematic_node:
   ros__parameters:
     # pca9685:
     #   address: 0x40

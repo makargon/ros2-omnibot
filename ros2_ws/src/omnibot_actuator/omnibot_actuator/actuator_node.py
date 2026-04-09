@@ -68,9 +68,9 @@ class ActuatorNode(Node):
         ]
 
         self.servos = [
-            servo.Servo(pwm_out=self.pca.channels[4], actuation_range=160),
+            servo.Servo(pwm_out=self.pca.channels[4], actuation_range=160), # grab
             servo.Servo(pwm_out=self.pca.channels[5], actuation_range=160),
-            servo.Servo(pwm_out=self.pca.channels[6], actuation_range=160)
+            servo.Servo(pwm_out=self.pca.channels[6], actuation_range=160) # hand
         ]
 
         self.sub_motors = self.create_subscription(
