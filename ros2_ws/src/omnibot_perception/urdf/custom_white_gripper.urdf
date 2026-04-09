@@ -1,0 +1,63 @@
+<?xml version="1.0"?>
+<robot name="custom_white_gripper">
+
+  <!-- Базовое звено крепления клешни (там где серва) -->
+  <link name="arm_base_link"/>
+
+  <!-- Сустав подъема/опускания всей стрелы (черная серва) -->
+  <joint name="arm_pitch_joint" type="revolute">
+    <parent link="arm_base_link"/>
+    <child link="arm_beam_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-1.57" upper="1.57" effort="10.0" velocity="1.0"/>
+  </joint>
+
+  <!-- Звено самой стрелы -->
+  <link name="arm_beam_link"/>
+
+  <!-- Фиксированный перенос в центр клешни (вылет 14см, опуск 5см) -->
+  <joint name="gripper_center_joint" type="fixed">
+    <parent link="arm_beam_link"/>
+    <child link="gripper_center_link"/>
+    <origin xyz="0.14 0 -0.05" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Виртуальный центр клешни -->
+  <link name="gripper_center_link"/>
+
+  <!-- ================= ЛЕВАЯ СТОРОНА ================= -->
+
+  <!-- Фиксированное смещение к левой подушечке (7 см) -->
+  <joint name="left_finger_fixed_joint" type="fixed">
+    <parent link="gripper_center_link"/>
+    <child link="left_finger_base_link"/>
+    <origin xyz="0 0.07 0" rpy="0 0 0"/>
+  </joint>
+
+  <link name="left_finger_base_link"/>
+
+  <!-- Сустав вращения левой подушечки (вращает деталь) -->
+  <joint name="left_pad_rotation_joint" type="continuous">
+    <parent link="left_finger_base_link"/>
+    <child link="left_pad_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+  </joint>
+
+  <link name="left_pad_link"/>
+
+  <!-- ================= ПРАВАЯ СТОРОНА ================= -->
+
+  <!-- Линейный сустав правой стороны (от 7 до 10 см) -->
+  <joint name="right_finger_prismatic_joint" type="prismatic">
+    <parent link="gripper_center_link"/>
+    <child link="right_pad_link"/>
+    <origin xyz="0 -0.07 0" rpy="0 0 0"/>
+    <axis xyz="0 -1 0"/>
+    <limit lower="0.0" upper="0.03" effort="10.0" velocity="0.5"/>
+  </joint>
+
+  <link name="right_pad_link"/>
+
+</robot>
