@@ -82,12 +82,10 @@ void PIDWheelNode::timer_callback()
 
     for (size_t i = 0; i < NUM_WHEELS; ++i) {
         pid_controllers_[i].T = dt;
-        motor_msg.data[i] = setpoint_[i]; 
-        
-        // PIDController_Update(
-        //     &pid_controllers_[i],
-        //     setpoint_[i],
-        //     measurement_[i]);
+        motor_msg.data[i] = PIDController_Update(
+            &pid_controllers_[i],
+            setpoint_[i],
+            measurement_[i]);
     }
 
     motor_pub_->publish(motor_msg);
