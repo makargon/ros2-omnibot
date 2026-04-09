@@ -12,9 +12,6 @@ setup(
         ('share/' + package_name + '/launch', [
             'launch/actuator.launch.py',
         ]),
-        ('share/' + package_name + '/config', [
-            'config/actuator.yaml',
-        ]),
     ],
     install_requires=['setuptools'],
     zip_safe=True,

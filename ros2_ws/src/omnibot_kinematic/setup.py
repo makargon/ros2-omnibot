@@ -12,9 +12,6 @@ setup(
         ('share/' + package_name + '/launch', [
             'launch/kinematic.launch.py',
         ]),
-        ('share/' + package_name + '/config', [
-            'config/kinematic.yaml',
-        ]),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
