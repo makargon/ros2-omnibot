@@ -9,7 +9,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/float32_multi_array.hpp"
 
-#include "PID.h"
+#include "omnibot_pid_wheel/pid_controller.hpp"
 
 class PIDWheelNode : public rclcpp::Node {
 public:
