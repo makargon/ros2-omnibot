@@ -18,8 +18,8 @@
 
 #include <cmath>
 
-namespace omni_wheel_drive_controller
-{
+// namespace omni_wheel_drive_controller
+// {
 Odometry::Odometry()
 : timestamp_(0.0),
   x_(0.0),
@@ -165,4 +165,4 @@ void Odometry::integrate(const double & dx, const double & dy, const double & dh
   }
 }
 
-}  // namespace omni_wheel_drive_controller
+// }  // namespace omni_wheel_drive_controller

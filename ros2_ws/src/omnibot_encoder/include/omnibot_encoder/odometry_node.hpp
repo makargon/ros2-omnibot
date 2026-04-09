@@ -6,7 +6,7 @@
 #include "nav_msgs/msg/odometry.hpp"
 #include "tf2_ros/transform_broadcaster.h"
 #include "geometry_msgs/msg/transform_stamped.h"
-#include "omni_wheel_drive_controller/odometry.hpp"
+#include "omnibot_encoder/odometry.hpp"
 
 #include <deque>
 #include <memory>
