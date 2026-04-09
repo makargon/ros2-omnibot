@@ -12,16 +12,16 @@ find_library(LGPIO_LIB lgpio REQUIRED)
 
 include_directories(include)
 
-add_executable(encoder_node src/encoder_node.cpp)
+add_executable(pid_wheel_node src/pid_wheel_node.cpp)
 
-ament_target_dependencies(encoder_node
+ament_target_dependencies(pid_wheel_node
   rclcpp
   std_msgs
 )
 
-target_link_libraries(encoder_node ${LGPIO_LIB})
+target_link_libraries(pid_wheel_node ${LGPIO_LIB})
 
-install(TARGETS encoder_node
+install(TARGETS pid_wheel_node
   DESTINATION lib/${PROJECT_NAME}
 )
 
