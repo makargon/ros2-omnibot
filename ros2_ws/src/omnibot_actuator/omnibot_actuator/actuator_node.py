@@ -28,8 +28,8 @@ class MotorControl:
             lgpio.gpio_write(self.chip, self.pin_a, 0)
 
     def set_speed(self, speed: float) -> None:
-        duty = int(speed * 65535)
-        self.pca.channels[self.pwm_channel].duty_cycle = duty
+        # duty = int(speed * 65535)
+        self.pca.channels[self.pwm_channel].duty_cycle = speed
 
 
 class ActuatorNode(Node):
