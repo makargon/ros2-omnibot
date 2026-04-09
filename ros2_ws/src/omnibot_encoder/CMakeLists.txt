@@ -14,8 +14,12 @@ find_package(tf2_ros REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 
 find_library(LGPIO_LIB lgpio REQUIRED)
+find_package(Eigen3 REQUIRED NO_MODULE)
 
-include_directories(include)
+include_directories(
+  ${EIGEN3_INCLUDE_DIRS}
+  include
+)
 
 # encoder
 add_executable(encoder_node src/encoder_node.cpp)

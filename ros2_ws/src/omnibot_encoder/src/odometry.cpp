@@ -14,7 +14,7 @@
 
 #define _USE_MATH_DEFINES
 
-#include "omni_wheel_drive_controller/odometry.hpp"
+#include "omnibot_encoder/odometry.hpp"
 
 #include <cmath>
 
