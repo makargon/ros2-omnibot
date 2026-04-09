@@ -27,8 +27,14 @@ class MotorControl:
             lgpio.gpio_write(self.chip, self.pin_b, 1)
             lgpio.gpio_write(self.chip, self.pin_a, 0)
 
-    def set_speed(self, speed: float) -> None: # speed приходит в м/с 
-        # макс скорость двигателей = 
+    def set_speed(self, speed: float) -> None: # speed приходит в м/с
+        # макс скорость двигателей = 1.8 м/c
+        speed /= 1.8
+        
+        if speed < 0.0:
+            speed = 0.0
+        elif speed > 1.0:
+            speed = 1.0
         duty = int(speed * 65535)
         self.pca.channels[self.pwm_channel].duty_cycle = duty
 
