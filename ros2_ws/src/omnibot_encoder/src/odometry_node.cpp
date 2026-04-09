@@ -17,7 +17,7 @@ OdometryNode::OdometryNode()
     params_.wheel_count  = this->get_parameter("wheel_count").as_int();
     params_.ticks_per_rev = 390;
 
-    odometry_.setParams(robot_radius_, wheel_radius_, wheel_offset_, wheel_count_);
+    odometry_.setParams(params_.robot_radius, params_.wheel_radius, params_.wheel_offset, params_.wheel_count);
     odometry_.setOdometry(0.0, 0.0, 0.0);
 
     last_ticks_.resize(params_.wheel_count, 0);

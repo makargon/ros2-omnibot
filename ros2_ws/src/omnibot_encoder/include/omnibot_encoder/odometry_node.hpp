@@ -5,6 +5,7 @@
 #include "std_msgs/msg/int32_multi_array.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "tf2_ros/transform_broadcaster.h"
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include "geometry_msgs/msg/transform_stamped.h"
 #include "omnibot_encoder/odometry.hpp"
 
