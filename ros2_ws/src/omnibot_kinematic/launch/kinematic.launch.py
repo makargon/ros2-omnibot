@@ -13,7 +13,7 @@ def generate_launch_description() -> LaunchDescription:
         executable='run',
         name='kinematic_node',
         output='screen',
-        parameters=[params_file],
+        # parameters=[params_file],
     )
 
     return LaunchDescription([kinematic_node])
