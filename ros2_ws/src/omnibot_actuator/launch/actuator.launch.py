@@ -11,7 +11,7 @@ def generate_launch_description() -> LaunchDescription:
 
     actuator_node = Node(
         package='omnibot_actuator',
-        executable='actuator_node',
+        executable='run',
         name='actuator_node',
         output='screen',
         parameters=[ParameterFile(params_file, allow_substs=True)],

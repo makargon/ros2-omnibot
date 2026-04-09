@@ -11,7 +11,7 @@ def generate_launch_description() -> LaunchDescription:
 
     kinematic_node = Node(
         package='omnibot_kinematic',
-        executable='kinematic_node',
+        executable='run',
         name='kinematic_node',
         output='screen',
         parameters=[ParameterFile(params_file, allow_substs=True)],
