@@ -1,0 +1,93 @@
+from launch import LaunchDescription
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
+from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch_ros.actions import Node
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
+from ament_index_python.packages import get_package_share_directory
+import os
+
+
+def generate_launch_description():
+    """запуск safety ноды с защитой от препятствий."""
+    
+    # получаем директории пакетов
+    omnibot_perception_dir = get_package_share_directory('omnibot_perception')
+    lidar_config_file = os.path.join(omnibot_perception_dir, 'config', 'lidar.yaml')
+    tf_config_file = os.path.join(omnibot_perception_dir, 'config', 'tf_broadcaster.yaml')
+    safety_config_file = os.path.join(omnibot_perception_dir, 'config', 'safety.yaml')
+    
+    # объявляем аргументы запуска
+    lidar_port = DeclareLaunchArgument(
+        'lidar_port',
+        default_value='/dev/ttyUSB0',
+        description='последовательный порт для подключения лидара'
+    )
+    
+    danger_distance = DeclareLaunchArgument(
+        'danger_distance',
+        default_value='0.5',
+        description='опасная дистанция для аварийной остановки (метры)'
+    )
+    
+    warning_distance = DeclareLaunchArgument(
+        'warning_distance',
+        default_value='1.0',
+        description='дистанция для предупреждения (метры)'
+    )
+    
+    safety_angle = DeclareLaunchArgument(
+        'safety_angle',
+        default_value='30.0',
+        description='угол обзора безопасности в градусах'
+    )
+    
+    enable_logging = DeclareLaunchArgument(
+        'enable_logging',
+        default_value='true',
+        description='включить подробное логирование'
+    )
+    
+    ld = LaunchDescription([
+        lidar_port,
+        danger_distance,
+        warning_distance,
+        safety_angle,
+        enable_logging,
+        
+        # нода лидара (использует готовый пакет rplidar_ros)
+        Node(
+            package='rplidar_ros',
+            executable='rplidar_composition',
+            name='rplidar_node',
+            parameters=[lidar_config_file],
+            remappings=[
+                ('scan', 'scan'),
+            ],
+            output='screen'
+        ),
+        
+        # нода tf бродкастера (публикует трансформации)
+        Node(
+            package='omnibot_perception',
+            executable='tf_broadcaster',
+            name='tf_broadcaster',
+            parameters=[tf_config_file],
+            output='screen'
+        ),
+        
+        # safety нода (останавливает при препятствиях)
+        Node(
+            package='omnibot_perception',
+            executable='simple_safety_stop_node',
+            name='simple_safety_stop_node',
+            parameters=[safety_config_file],
+            remappings=[
+                ('cmd_vel', 'cmd_vel'),           # входная команда скорости
+                ('cmd_vel_safe', 'cmd_vel_safe'), # безопасная команда
+                ('scan', 'scan'),                 # данные с лидара
+            ],
+            output='screen'
+        ),
+    ])
+    
+    return ld
