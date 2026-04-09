@@ -6,6 +6,7 @@
 #include "nav_msgs/msg/odometry.hpp"
 #include "tf2_ros/transform_broadcaster.h"
 #include "geometry_msgs/msg/transform_stamped.h"
+#include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 
 #include <deque>
 #include <memory>
@@ -44,6 +45,6 @@ private:
     rclcpp::TimerBase::SharedPtr odom_timer_;
     
     double filter_average(const std::deque<double>& window);
-}
+};
 
 #endif
