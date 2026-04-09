@@ -70,16 +70,9 @@ void OdometryNode::encoder_callback(const std_msgs::msg::Int32MultiArray::Shared
         wheel_velocities_[i] = wheel_distance / dt;
     }
 
-    double tan30 = std::tan(M_PI / 6.0);
-
-    vx_ = (wheel_velocities_[0] + wheel_velocities_[1] + wheel_velocities_[2]) / 3.0;
-    vy_ = (wheel_velocities_[2] - wheel_velocities_[0]) / (2.0 * tan30);
-    
-    if (std::abs(params_.robot_radius) > 1e-6) {
-        vtheta_ = (wheel_velocities_[1] - vx_) / params_.robot_radius;
-    } else {
-        vtheta_ = 0.0;
-    }
+    vx_ = (2.0 * wheel_velocities_[0] - wheel_velocities_[1] - wheel_velocities_[2]) / 3.0;
+    vy_ = (wheel_velocities_[1] - wheel_velocities_[2]) / std::sqrt(3.0);
+    vtheta_ = (wheel_velocities_[0] + wheel_velocities_[1] + wheel_velocities_[2]) / (3.0 * params_.robot_radius);
 
     vx_filter_.push_back(vx_);
     vy_filter_.push_back(vy_);
