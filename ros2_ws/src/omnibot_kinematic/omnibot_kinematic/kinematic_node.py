@@ -10,7 +10,7 @@ class KinematicNode(Node):
 
         self.declare_parameter('wheel_radius', 0.05)
         self.declare_parameter('wheel_base', 0.15)
-        self.declare_parameter('cmd_frame_rotation_deg', 0.0)
+        self.declare_parameter('cmd_frame_rotation_deg', 90.0)
 
         self.wheel_radius = self.get_parameter('wheel_radius').value
         self.wheel_base = self.get_parameter('wheel_base').value
@@ -32,9 +32,10 @@ class KinematicNode(Node):
         self.get_logger().info('Kinematic node started')
 
     def cmd_vel_callback(self, msg: Twist):
+        # 0
         a = math.radians(self.cmd_frame_rotation_deg)
-        ca = math.cos(a)
-        sa = math.sin(a)
+        ca = math.cos(a) # 1
+        sa = math.sin(a) # 0
         vx = ca * msg.linear.x - sa * msg.linear.y
         vy = sa * msg.linear.x + ca * msg.linear.y
         wz = msg.angular.z
