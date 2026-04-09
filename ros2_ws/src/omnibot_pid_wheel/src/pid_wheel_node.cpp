@@ -20,14 +20,22 @@ PIDWheelNode::PIDWheelNode() : Node("pid_wheel_node"),
         pid.limMaxInt = 50.0f;
         pid.T = 0.05f;
     }
+    
+    this->declare_parameter("wheel_radius", 0.05);
+    this->declare_parameter("ticks_per_rev", 390.0);
+    wheel_radius_ = this->get_parameter("wheel_radius").as_double();
+    ticks_per_rev_ = this->get_parameter("ticks_per_rev").as_double();
+
+    last_ticks_.resize(NUM_WHEELS, 0);
+    last_time_ = this->now();
 
     cmd_sub_ = this->create_subscription<std_msgs::msg::Float32MultiArray>(
         "/cmd_wheel", 10,
         std::bind(&PIDWheelNode::cmd_callback, this, std::placeholders::_1));
 
-    speed_sub_ = this->create_subscription<std_msgs::msg::Float32MultiArray>(
-        "/wheel_speeds", 10,
-        std::bind(&PIDWheelNode::speed_callback, this, std::placeholders::_1));
+    encoder_sub_ = this->create_subscription<std_msgs::msg::Int32MultiArray>(
+        "/encoder_ticks", 10,
+        std::bind(&PIDWheelNode::encoder_callback, this, std::placeholders::_1));
 
     motor_pub_ = this->create_publisher<std_msgs::msg::Float32MultiArray>(
         "/motor_speeds", 10);
@@ -52,33 +60,85 @@ void PIDWheelNode::cmd_callback(const std_msgs::msg::Float32MultiArray::SharedPt
     }
 }
 
-void PIDWheelNode::speed_callback(const std_msgs::msg::Float32MultiArray::SharedPtr msg)
-{
-    if (msg->data.size() >= NUM_WHEELS) {
-        std::copy_n(msg->data.begin(), NUM_WHEELS, measurement_.begin());
-        measurement_received_ = true;
-    } else {
-        RCLCPP_WARN(
-            this->get_logger(),
-            "wheel_speed message has insufficient data (%zu < %zu)",
-            msg->data.size(), NUM_WHEELS);
-    }
-}
-
 void PIDWheelNode::timer_callback()
 {
+    if (!measurement_received_) {
+        // Нет данных с энкодеров – не отправляем команды
+        static int warn_count = 0;
+        if (warn_count++ % 100 == 0)
+            RCLCPP_WARN(this->get_logger(), "Waiting for encoder data...");
+        return;
+    }
+
+    static rclcpp::Time last_call = this->now();
+    auto now = this->now();
+    double dt = (now - last_call).seconds();
+    last_call = now;
+    if (dt < 0.001) dt = 0.01;
+    if (dt > 0.1) dt = 0.01;
+
     std_msgs::msg::Float32MultiArray motor_msg;
     motor_msg.data.resize(NUM_WHEELS);
 
     for (size_t i = 0; i < NUM_WHEELS; ++i) {
-        float output = PIDController_Update(
+        pid_controllers_[i].T = dt;
+        motor_msg.data[i] = PIDController_Update(
             &pid_controllers_[i],
             setpoint_[i],
             measurement_[i]);
-        motor_msg.data[i] = output;
     }
 
     motor_pub_->publish(motor_msg);
+}
+
+void PIDWheelNode::encoder_callback(const std_msgs::msg::Int32MultiArray::SharedPtr msg)
+{
+    if (msg->data.size() < NUM_WHEELS) {
+        RCLCPP_WARN(this->get_logger(), "Encoder message has insufficient data");
+        return;
+    }
+
+    rclcpp::Time current_time = this->now();
+    double dt = (current_time - last_time_).seconds();
+
+    if (dt < 0.0001) {
+        last_time_ = current_time;
+        return;
+    }
+    if (dt > 0.1) {
+        RCLCPP_WARN(this->get_logger(), "Large dt: %.3f s, resetting", dt);
+        last_time_ = current_time;
+        for (size_t i = 0; i < NUM_WHEELS; ++i) {
+            last_ticks_[i] = msg->data[i];
+        }
+        return;
+    }
+
+    std::vector<int32_t> delta_ticks(NUM_WHEELS);
+    for (size_t i = 0; i < NUM_WHEELS; ++i) {
+        delta_ticks[i] = msg->data[i] - last_ticks_[i];
+        last_ticks_[i] = msg->data[i];
+    }
+
+    for (size_t i = 0; i < NUM_WHEELS; ++i) {
+        double revs = static_cast<double>(delta_ticks[i]) / ticks_per_rev_;
+        double distance = revs * 2.0 * M_PI * wheel_radius_;
+        double speed = distance / dt;
+        measurement_[i] = static_cast<float>(speed);
+    }
+
+    // Если хотите публиковать измеренные скорости для других узлов
+    // (например, для odometry_node), раскомментируйте:
+    /*
+    std_msgs::msg::Float32MultiArray speed_msg;
+    speed_msg.data.resize(NUM_WHEELS);
+    std::copy(measurement_.begin(), measurement_.end(), speed_msg.data.begin());
+    // Предварительно нужно создать publisher_ (например, wheel_speeds_pub_)
+    // wheel_speeds_pub_->publish(speed_msg);
+    */
+
+    last_time_ = current_time;
+    measurement_received_ = true;
 }
 
 int main(int argc, char** argv)
