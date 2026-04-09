@@ -1,6 +1,6 @@
 kinematic_node:
   ros__parameters:
-    pca9685:
-      address: 0x40
-      frequency: 50
-    gpio_chip: 4
+    # pca9685:
+    #   address: 0x40
+    #   frequency: 50
+    # gpio_chip: 4
