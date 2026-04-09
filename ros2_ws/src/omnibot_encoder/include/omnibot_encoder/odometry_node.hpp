@@ -8,12 +8,13 @@
 #include "geometry_msgs/msg/transform_stamped.h"
 
 #include <deque>
+#include <memory>
+#include <vector>
 
 class OdometryNode : public rclcpp::Node
 {
 public:
     OdometryNode();
-    ~OdometryNode();
 
 private:
     void encoder_callback(const std_msgs::msg::Int32MultiArray::SharedPtr msg);

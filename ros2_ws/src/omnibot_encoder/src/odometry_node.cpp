@@ -44,7 +44,19 @@ OdometryNode::OdometryNode()
 void OdometryNode::encoder_callback(const std_msgs::msg::Int32MultiArray::SharedPtr msg)
 {
     rclcpp::Time current_time = this->now();
-    // double dt = (current_time - last_time_).seconds();
+    double dt = (current_time - last_time_).seconds();
+    if (dt < 0.0001) {
+        last_time_ = current_time;
+        return;
+    }
+    if (dt > 0.1) {
+        RCLCPP_WARN(this->get_logger(), "Large dt detected: %.3f s, resetting", dt);
+        last_time_ = current_time;
+        for (size_t i = 0; i < 3 && i < msg->data.size(); ++i) {
+            last_ticks_[i] = msg->data[i];
+        }
+        return;
+    }
 
     std::vector<int32_t> delta_ticks(3);
     for (size_t i = 0; i < 3; ++i) {
