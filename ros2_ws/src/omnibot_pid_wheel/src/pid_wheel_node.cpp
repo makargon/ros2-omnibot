@@ -1,4 +1,5 @@
 #include "omnibot_pid_wheel/pid_wheel_node.hpp"
+#include "rclcpp/rclcpp.hpp"
 
 PIDWheelNode::PIDWheelNode() : Node("pid_wheel_node"),
     setpoint_(NUM_WHEELS, 0.0f),
