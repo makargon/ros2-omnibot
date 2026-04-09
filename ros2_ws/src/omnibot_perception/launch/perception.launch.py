@@ -25,10 +25,16 @@ def generate_launch_description():
         default_value='8765',
         description='WebSocket port for Foxglove Bridge'
     )
+    servo_joint_state_enabled = DeclareLaunchArgument(
+        'with_servo_joint_state',
+        default_value='true',
+        description='Publish /joint_states from /servo_angles for gripper URDF'
+    )
     
     ld = LaunchDescription([
         foxglove_enabled,
         foxglove_port,
+        servo_joint_state_enabled,
         
         # Include complete SLAM launch
         IncludeLaunchDescription(
@@ -46,6 +52,13 @@ def generate_launch_description():
             }],
             output='screen',
             condition=IfCondition(LaunchConfiguration('foxglove'))
+        ),
+        Node(
+            package='omnibot_perception',
+            executable='servo_joint_state_node',
+            name='servo_joint_state_node',
+            output='screen',
+            condition=IfCondition(LaunchConfiguration('with_servo_joint_state'))
         ),
     ])
     

@@ -26,6 +26,7 @@ setup(
         'console_scripts': [
             'lidar_node = omnibot_perception.lidar_node:main',
             'tf_broadcaster = omnibot_perception.tf_broadcaster:main',
+            'servo_joint_state_node = omnibot_perception.servo_joint_state_node:main',
         ],
     },
 )
