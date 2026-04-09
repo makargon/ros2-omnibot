@@ -12,7 +12,10 @@ find_library(LGPIO_LIB lgpio REQUIRED)
 
 include_directories(include)
 
-add_executable(pid_wheel_node src/pid_wheel_node.cpp)
+add_executable(pid_wheel_node 
+  src/pid_wheel_node.cpp
+  src/pid_controller.cpp
+)
 
 ament_target_dependencies(pid_wheel_node
   rclcpp
