@@ -13,9 +13,9 @@ OdometryNode::OdometryNode()
     // this->declare_parameter("robot_radius", 0.15);
     // this->declare_parameter("ticks_per_rev", 390.0);
     
-    params_.wheel_radius = 0.05 //this->get_parameter("wheel_radius").as_double();
-    params_.robot_radius = 0.15 //this->get_parameter("robot_radius").as_double();
-    params_.ticks_per_rev = 390 //this->get_parameter("ticks_per_rev").as_double();
+    params_.wheel_radius = 0.05; //this->get_parameter("wheel_radius").as_double();
+    params_.robot_radius = 0.15; //this->get_parameter("robot_radius").as_double();
+    params_.ticks_per_rev = 390; //this->get_parameter("ticks_per_rev").as_double();
 
     encoder_sub_ = this->create_subscription<std_msgs::msg::Int32MultiArray>(
         "/encoder_ticks", 10,
