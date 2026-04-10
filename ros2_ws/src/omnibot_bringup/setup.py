@@ -26,4 +26,5 @@ setup(
     ]},
     scripts=[
         'missions/demo.py',
+    ]
 )
