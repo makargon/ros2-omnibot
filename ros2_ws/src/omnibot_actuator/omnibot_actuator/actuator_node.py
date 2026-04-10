@@ -30,10 +30,6 @@ class MotorControl:
             lgpio.gpio_write(self.chip, self.pin_b, 0)
             lgpio.gpio_write(self.chip, self.pin_a, 0)
 
-        # a = lgpio.gpio_read(self.chip, self.pin_a)
-        # b = lgpio.gpio_read(self.chip, self.pin_b)
-        # print(f"  actual: a={a}, b={b}")
-
     def set_speed(self, speed: float) -> None: # speed приходит в рад/с
         # макс скорость двигателей = 1.8 м/c => * r => рад/с
         speed /= 1.8 * 0.05
@@ -98,6 +94,8 @@ class ActuatorNode(Node):
             self.servo_callback,
             10
         )
+
+        self.servos[2].angle = 100
 
     def motor_callback(self, msg: Float32MultiArray) -> None:
         for motor, speed in zip(self.motors, msg.data):
