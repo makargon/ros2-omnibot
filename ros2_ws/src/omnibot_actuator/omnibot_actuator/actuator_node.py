@@ -99,14 +99,15 @@ class ActuatorNode(Node):
             motor.set_dir(speed > 0)
             motor.set_speed(abs(speed))
 
+    # TODO Для серв необходима калибровка - непонятно в каком положении сейчас находится -> нет смысла ставить ограничения
     def servo_callback(self, msg: Int32MultiArray) -> None:
-        i: int = 4
+        # i: int = 4
         for serv, angle in zip(self.servos, msg.data):
-            if i == 4 and angle > 30:
+            # if i == 4 and angle > 30:
                 serv.angle = angle
-            if i == 6 and angle > 64:
-                serv.angle = angle
-            i += 1
+            # if i == 6 and angle > 64:
+                # serv.angle = angle
+            # i += 1
 
     def destroy_node(self) -> bool:
         for motor in self.motors:
