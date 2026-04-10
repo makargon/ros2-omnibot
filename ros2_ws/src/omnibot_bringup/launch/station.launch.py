@@ -31,7 +31,8 @@ def generate_launch_description() -> LaunchDescription:
         DeclareLaunchArgument('with_cv', default_value='true'),
         DeclareLaunchArgument('with_foxglove', default_value='true'),
         DeclareLaunchArgument('foxglove_port', default_value='8765'),
-        DeclareLaunchArgument('station_camera_device', default_value='/dev/video0'),
+        DeclareLaunchArgument('robot_marker_id', default_value='10'),
+        DeclareLaunchArgument('station_camera_device', default_value='/dev/video2'),
         DeclareLaunchArgument('station_camera_pixel_format', default_value='YUYV'),
         DeclareLaunchArgument('station_camera_io_method', default_value='read'),
         DeclareLaunchArgument('station_camera_width', default_value='3840'),
@@ -79,6 +80,7 @@ def generate_launch_description() -> LaunchDescription:
             {
                 'image_topic': LaunchConfiguration('station_camera_topic'),
                 'camera_info_topic': '/station/camera/camera_info',
+                'robot_marker_id': LaunchConfiguration('robot_marker_id'),
             },
         ),
 

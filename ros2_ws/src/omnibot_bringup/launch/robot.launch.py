@@ -30,6 +30,7 @@ def generate_launch_description() -> LaunchDescription:
     return LaunchDescription([
         DeclareLaunchArgument('with_control', default_value='true'),
         DeclareLaunchArgument('with_lidar', default_value='true'),
+        DeclareLaunchArgument('lidar_port', default_value='/dev/ttyUSB0'),
         # DeclareLaunchArgument('with_robot_camera', default_value='true'),
         DeclareLaunchArgument('with_foxglove', default_value='false'),
         DeclareLaunchArgument('foxglove_port', default_value='8765'),
@@ -37,11 +38,18 @@ def generate_launch_description() -> LaunchDescription:
         DeclareLaunchArgument('robot_calibration_yaml', default_value=''),
 
         _include('omnibot_actuator', 'actuator.launch.py', IfCondition(with_control)),
-        _include('omnibot_encoder', 'encoder.launch.py', IfCondition(with_control)),
+        # _include('omnibot_encoder', 'encoder.launch.py', IfCondition(with_control)),
         _include('omnibot_encoder', 'odometry.launch.py', IfCondition(with_control)),
         _include('omnibot_kinematic', 'kinematic.launch.py', IfCondition(with_control)),
 
-        _include('omnibot_perception', 'lidar.launch.py', IfCondition(with_lidar)),
+        _include(
+            'omnibot_perception',
+            'lidar.launch.py',
+            IfCondition(with_lidar),
+            {
+                'lidar_port': LaunchConfiguration('lidar_port'),
+            },
+        ),
         Node(
             package='foxglove_bridge',
             executable='foxglove_bridge',
