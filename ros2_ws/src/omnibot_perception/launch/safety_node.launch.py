@@ -47,34 +47,7 @@ def generate_launch_description():
         description='включить подробное логирование'
     )
     
-    ld = LaunchDescription([
-        lidar_port,
-        danger_distance,
-        warning_distance,
-        safety_angle,
-        enable_logging,
-        
-        # нода лидара (использует готовый пакет rplidar_ros)
-        Node(
-            package='rplidar_ros',
-            executable='rplidar_composition',
-            name='rplidar_node',
-            parameters=[lidar_config_file],
-            remappings=[
-                ('scan', 'scan'),
-            ],
-            output='screen'
-        ),
-        
-        # нода tf бродкастера (публикует трансформации)
-        Node(
-            package='omnibot_perception',
-            executable='tf_broadcaster',
-            name='tf_broadcaster',
-            parameters=[tf_config_file],
-            output='screen'
-        ),
-        
+    ld = LaunchDescription([        
         # safety нода (останавливает при препятствиях)
         Node(
             package='omnibot_perception',
