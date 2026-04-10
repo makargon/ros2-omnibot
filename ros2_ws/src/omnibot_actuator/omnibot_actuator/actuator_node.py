@@ -77,7 +77,7 @@ class ActuatorNode(Node):
         self.servos = [
             servo.Servo(pwm_out=self.pca.channels[4], actuation_range=160), # grab
             servo.Servo(pwm_out=self.pca.channels[5], actuation_range=160),
-            servo.Servo(pwm_out=self.pca.channels[6], actuation_range=160) # hand
+            servo.Servo(pwm_out=self.pca.channels[6], actuation_range=120) # hand
         ]
 
         self.sub_motors = self.create_subscription(
@@ -100,8 +100,13 @@ class ActuatorNode(Node):
             motor.set_speed(abs(speed))
 
     def servo_callback(self, msg: Int32MultiArray) -> None:
+        i: int = 4
         for serv, angle in zip(self.servos, msg.data):
-            serv.angle = angle
+            if i == 4 and angle > 30:
+                serv.angle = angle
+            if i == 6 and angle > 64:
+                serv.angle = angle
+            i += 1
 
     def destroy_node(self) -> bool:
         for motor in self.motors:
