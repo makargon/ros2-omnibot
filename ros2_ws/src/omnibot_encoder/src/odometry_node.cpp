@@ -67,10 +67,10 @@ void OdometryNode::encoder_callback(const std_msgs::msg::Int32MultiArray::Shared
         last_ticks_[i] = msg->data[i];
     }
     
+    std::vector<double> wheels_vel(wheels_pos.size());
     for (size_t i = 0; i < 3; ++i) {
         double revs = static_cast<double>(delta_ticks[i]) / ticks_per_rev_;
-        // double wheel_angular_vel = revs * 2.0 * M_PI / dt; // rad/s
-        wheel_angular_vel[i] = revs * 2.0 * M_PI / dt;
+        wheels_vel[i] = revs * 2.0 * M_PI / dt; // rad/s
     }
 
     // мб убрать
