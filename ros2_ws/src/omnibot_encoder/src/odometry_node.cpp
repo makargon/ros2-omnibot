@@ -109,12 +109,12 @@ void OdometryNode::encoder_callback(const std_msgs::msg::Int32MultiArray::Shared
     publish_odom();
 }
 
-double OdometryNode::filter_average(const std::deque<double>& window)
-{
-    if (window.empty()) return 0.0;
-    double sum = std::accumulate(window.begin(), window.end(), 0.0);
-    return sum / window.size();
-}
+// double OdometryNode::filter_average(const std::deque<double>& window)
+// {
+//     if (window.empty()) return 0.0;
+//     double sum = std::accumulate(window.begin(), window.end(), 0.0);
+//     return sum / window.size();
+// }
 
 void OdometryNode::publish_odom()
 {
