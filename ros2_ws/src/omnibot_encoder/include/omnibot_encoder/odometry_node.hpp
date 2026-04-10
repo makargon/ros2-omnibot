@@ -19,27 +19,20 @@ class OdometryNode : public rclcpp::Node
 public:
     OdometryNode();
 
-    bool updateFromVel(const std::vector<double> & wheels_vel, const rclcpp::Time & time);
-    void setOdometry(const double & x, const double & y, const double & heading);
-    void resetOdometry();
-
     double getX() const { return x_; }
     double getY() const { return y_; }
     double getHeading() const { return heading_; }
     double getLinearXVel() const { return linear_x_vel_; }
     double getLinearYVel() const { return linear_y_vel_; }
     double getAngularVel() const { return angular_vel_; }
-    
 
 private:
     void encoder_callback(const std_msgs::msg::Int32MultiArray::SharedPtr msg);
-    Eigen::Vector3d compute_robot_velocity(const std::vector<double> & wheels_vel) const;
-    void integrate(const double & dx, const double & dy, const double & dheading);
     double filter_average(const std::deque<double>& window);
     void publish_odom();
     
     // Current timestamp:
-    rclcpp::Time timestamp_;
+    rclcpp::Time last_time_;
 
     // Current pose:
     double x_;        // [m]
@@ -58,7 +51,6 @@ private:
     double vx_;
     double vy_;
     double vtheta_;
-
 
     // Previous wheel positions/states [rads]:
     std::vector<double> wheels_old_pos_;

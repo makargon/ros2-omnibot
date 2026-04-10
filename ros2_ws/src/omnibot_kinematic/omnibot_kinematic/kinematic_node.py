@@ -49,7 +49,7 @@ class KinematicNode(Node):
         wheel_msg.data = [w1, w2, w3]
 
         self.publisher.publish(wheel_msg)
-        self.get_logger().debug(f'Published wheel speeds: {wheel_msg.data}')
+        # self.get_logger().debug(f'Published wheel speeds: {wheel_msg.data}')
 
 def main(args=None):
     rclpy.init(args=args)
