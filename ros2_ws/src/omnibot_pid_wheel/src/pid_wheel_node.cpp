@@ -14,10 +14,10 @@ PIDWheelNode::PIDWheelNode() : Node("pid_wheel_node"),
         pid.Ki = 0.1f;
         pid.Kd = 0.01f;
         pid.tau = 0.05f;
-        pid.limMin = -100.0f;
-        pid.limMax = 100.0f;
-        pid.limMinInt = -50.0f;
-        pid.limMaxInt = 50.0f;
+        pid.limMin = -1 * 1.8 * 0.05;
+        pid.limMax = 1.8 * 0.05;
+        pid.limMinInt = -0.2;
+        pid.limMaxInt = 0.2;
         pid.T = 0.05f;
     }
     
