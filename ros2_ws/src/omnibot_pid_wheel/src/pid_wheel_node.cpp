@@ -63,7 +63,6 @@ void PIDWheelNode::cmd_callback(const std_msgs::msg::Float32MultiArray::SharedPt
 void PIDWheelNode::timer_callback()
 {
     if (!measurement_received_) {
-        // Нет данных с энкодеров – не отправляем команды
         static int warn_count = 0;
         if (warn_count++ % 100 == 0)
             RCLCPP_WARN(this->get_logger(), "Waiting for encoder data...");

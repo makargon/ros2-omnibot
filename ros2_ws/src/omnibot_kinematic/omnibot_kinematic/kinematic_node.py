@@ -32,22 +32,17 @@ class KinematicNode(Node):
         self.get_logger().info('Kinematic node started')
 
     def cmd_vel_callback(self, msg: Twist):
-        # 0
-        # a = math.radians(self.cmd_frame_rotation_deg)
-        # ca = math.cos(a) # 1
-        # sa = math.sin(a) # 0
-        vx = msg.linear.x #ca * msg.linear.x - sa * msg.linear.y
-        vy = msg.linear.y #sa * msg.linear.x + ca * msg.linear.y
+        vx = msg.linear.x
+        vy = msg.linear.y
         wz = msg.angular.z
 
         r = self.wheel_radius
         l = self.wheel_base
         sqrt3 = math.sqrt(3.0)
 
-        # препроверить
-        w1 = (-0.5 * vx + (sqrt3 / 2.0) * vy + l * wz) / r
-        w2 = (-0.5 * vx - (sqrt3 / 2.0) * vy + l * wz) / r
-        w3 = (vx + l * wz) / r
+        w1 = (-vy - l * wz) / r
+        w2 = ((sqrt3 / 2) * vx + 0.5 * vy - l * wz ) / r
+        w3 = (- (sqrt3 / 2) * vx + 0.5 * vy - l * wz) / r
 
         wheel_msg = Float32MultiArray()
         wheel_msg.data = [w1, w2, w3]
