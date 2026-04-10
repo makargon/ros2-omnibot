@@ -30,6 +30,7 @@ OdometryNode::OdometryNode()
 
     odom_pub_ = this->create_publisher<nav_msgs::msg::Odometry>("/odom", 10);
     tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(this);
+    last_ticks_.resize(3, 0);
     
     odom_timer_ = this->create_wall_timer(
         std::chrono::milliseconds(20),
