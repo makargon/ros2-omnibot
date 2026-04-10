@@ -68,6 +68,10 @@ void PIDWheelNode::timer_callback()
             RCLCPP_WARN(this->get_logger(), "Waiting for encoder data...");
         return;
     }
+    
+    if (std::all_of(measurement_, measurement_ + NUM_WHEELS, [](double v) { return v == 0.0; })) {
+        return;
+    }
 
     static rclcpp::Time last_call = this->now();
     auto now = this->now();
@@ -85,7 +89,6 @@ void PIDWheelNode::timer_callback()
             &pid_controllers_[i],
             setpoint_[i],
             measurement_[i]);
-        
     }
 
     motor_pub_->publish(motor_msg);
@@ -126,16 +129,6 @@ void PIDWheelNode::encoder_callback(const std_msgs::msg::Int32MultiArray::Shared
         double speed = distance / dt;
         measurement_[i] = static_cast<float>(speed);
     }
-
-    // Если хотите публиковать измеренные скорости для других узлов
-    // (например, для odometry_node), раскомментируйте:
-    /*
-    std_msgs::msg::Float32MultiArray speed_msg;
-    speed_msg.data.resize(NUM_WHEELS);
-    std::copy(measurement_.begin(), measurement_.end(), speed_msg.data.begin());
-    // Предварительно нужно создать publisher_ (например, wheel_speeds_pub_)
-    // wheel_speeds_pub_->publish(speed_msg);
-    */
 
     last_time_ = current_time;
     measurement_received_ = true;

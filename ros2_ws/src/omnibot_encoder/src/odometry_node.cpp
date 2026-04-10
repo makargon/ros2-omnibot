@@ -17,58 +17,57 @@ OdometryNode::OdometryNode()
     ticks_per_rev_(390),
     wheels_old_pos_(0.0)
 {
+  encoder_sub_ = this->create_subscription<std_msgs::msg::Int32MultiArray>(
+    "/encoder_ticks", 10,
+    std::bind(&OdometryNode::encoder_callback, this, std::placeholders::_1));
+
+  odom_pub_ = this->create_publisher<nav_msgs::msg::Odometry>("/odom", 10);
+  tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(this);
+  last_ticks_.resize(3, 0);
   
-    encoder_sub_ = this->create_subscription<std_msgs::msg::Int32MultiArray>(
-        "/encoder_ticks", 10,
-        std::bind(&OdometryNode::encoder_callback, this, std::placeholders::_1));
+  odom_timer_ = this->create_wall_timer(
+    std::chrono::milliseconds(20),
+    std::bind(&OdometryNode::publish_odom, this));
 
-    odom_pub_ = this->create_publisher<nav_msgs::msg::Odometry>("/odom", 10);
-    tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(this);
-    last_ticks_.resize(3, 0);
-    
-    odom_timer_ = this->create_wall_timer(
-        std::chrono::milliseconds(20),
-        std::bind(&OdometryNode::publish_odom, this));
-
-    RCLCPP_INFO(
-        this->get_logger(),
-        "Odometry node started");
-    RCLCPP_INFO(
-        this->get_logger(),
-        "Params: wheel_radius=%.3f, robot_radius=%.3f, ticks_per_rev=%.0f",
-        wheel_radius_, robot_radius_, ticks_per_rev_);
+  RCLCPP_INFO(
+      this->get_logger(),
+      "Odometry node started");
+  RCLCPP_INFO(
+      this->get_logger(),
+      "Params: wheel_radius=%.3f, robot_radius=%.3f, ticks_per_rev=%.0f",
+      wheel_radius_, robot_radius_, ticks_per_rev_);
 }
 
 void OdometryNode::encoder_callback(const std_msgs::msg::Int32MultiArray::SharedPtr msg)
 {
-    rclcpp::Time current_time = this->now();
-    double dt = (current_time - timestamp_).seconds();
-    if (dt < 0.0001) {
-        timestamp_ = current_time;
-        return;
-    }
-    if (dt > 0.1) {
-        RCLCPP_WARN(this->get_logger(), "Large dt detected: %.3f s, resetting", dt);
-        timestamp_ = current_time;
-        for (size_t i = 0; i < 3 && i < msg->data.size(); ++i) {
-            last_ticks_[i] = msg->data[i];
-        }
-        return;
-    }
-
-    std::vector<int32_t> delta_ticks(3);
-    for (size_t i = 0; i < 3; ++i) {
-        delta_ticks[i] = msg->data[i] - last_ticks_[i];
+  rclcpp::Time current_time = this->now();
+  double dt = (current_time - timestamp_).seconds();
+  if (dt < 0.0001) {
+    timestamp_ = current_time;
+    return;
+  }
+  if (dt > 0.1) {
+    RCLCPP_WARN(this->get_logger(), "Large dt detected: %.3f s, resetting", dt);
+    timestamp_ = current_time;
+    for (size_t i = 0; i < 3 && i < msg->data.size(); ++i) {
         last_ticks_[i] = msg->data[i];
     }
-    
-    std::vector<double> wheels_vel(3);
-    for (size_t i = 0; i < 3; ++i) {
-        double revs = static_cast<double>(delta_ticks[i]) / ticks_per_rev_;
-        wheels_vel[i] = revs * 2.0 * M_PI / dt; // rad/s
-    }
+    return;
+  }
 
-    updateFromVel(wheels_vel, current_time);
+  std::vector<int32_t> delta_ticks(3);
+  for (size_t i = 0; i < 3; ++i) {
+      delta_ticks[i] = msg->data[i] - last_ticks_[i];
+      last_ticks_[i] = msg->data[i];
+  }
+  
+  std::vector<double> wheels_vel(3);
+  for (size_t i = 0; i < 3; ++i) {
+      double revs = static_cast<double>(delta_ticks[i]) / ticks_per_rev_;
+      wheels_vel[i] = revs * 2.0 * M_PI / dt; // rad/s
+  }
+
+  updateFromVel(wheels_vel, current_time);
 }
 
 bool OdometryNode::updateFromPos(const std::vector<double> & wheels_pos, const rclcpp::Time & time)
