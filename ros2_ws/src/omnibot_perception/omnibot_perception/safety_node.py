@@ -63,7 +63,6 @@ class SimpleSafetyStopNode(Node):
         
         self.get_logger().info('простая safety нода запущена')
         self.get_logger().info(f'опасная дистанция: {self.danger_distance}м')
-        self.get_logger().info(f'угол обзора: {math.degrees(self.safety_angle):.0f}°')
     
     def scan_callback(self, msg):
         """сохраняет данные с лидара"""
