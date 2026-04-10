@@ -81,7 +81,7 @@ void PIDWheelNode::timer_callback()
 
     for (size_t i = 0; i < NUM_WHEELS; ++i) {
         pid_controllers_[i].T = dt;
-        motor_msg.data[i] = 0 if setpoint_[i] == 0 else PIDController_Update(
+        motor_msg.data[i] = setpoint_[i] == 0 ? 0 : PIDController_Update(
             &pid_controllers_[i],
             setpoint_[i],
             measurement_[i]);
