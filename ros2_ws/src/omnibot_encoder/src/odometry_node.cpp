@@ -42,10 +42,10 @@ void OdometryNode::encoder_callback(const std_msgs::msg::Int32MultiArray::Shared
 {
   rclcpp::Time current_time = this->now();
   double dt = (current_time - timestamp_).seconds();
-  if (dt < 0.0001) {
-    timestamp_ = current_time;
-    return;
-  }
+  // if (dt < 0.0001) {
+  //   timestamp_ = current_time;
+  //   return;
+  // }
   if (dt > 0.1) {
     RCLCPP_WARN(this->get_logger(), "Large dt detected: %.3f s, resetting", dt);
     timestamp_ = current_time;
@@ -57,41 +57,17 @@ void OdometryNode::encoder_callback(const std_msgs::msg::Int32MultiArray::Shared
 
   std::vector<int32_t> delta_ticks(3);
   for (size_t i = 0; i < 3; ++i) {
-      delta_ticks[i] = msg->data[i] - last_ticks_[i];
-      last_ticks_[i] = msg->data[i];
+    delta_ticks[i] = msg->data[i] - last_ticks_[i];
+    last_ticks_[i] = msg->data[i];
   }
   
   std::vector<double> wheels_vel(3);
   for (size_t i = 0; i < 3; ++i) {
-      double revs = static_cast<double>(delta_ticks[i]) / ticks_per_rev_;
-      wheels_vel[i] = revs * 2.0 * M_PI / dt; // rad/s
+    double revs = static_cast<double>(delta_ticks[i]) / ticks_per_rev_;
+    wheels_vel[i] = revs * 2.0 * M_PI / dt; // rad/s
   }
 
   updateFromVel(wheels_vel, current_time);
-}
-
-bool OdometryNode::updateFromPos(const std::vector<double> & wheels_pos, const rclcpp::Time & time)
-{
-  const double dt = time.seconds() - timestamp_.seconds();
-  // We cannot estimate angular velocity with very small time intervals
-  if (std::fabs(dt) < 1e-6)
-  {
-    return false;
-  }
-
-  // Estimate angular velocity of wheels using old and current position [rads/s]:
-  std::vector<double> wheels_vel(wheels_pos.size());
-  for (size_t i = 0; i < static_cast<size_t>(wheels_pos.size()); ++i)
-  {
-    wheels_vel[i] = (wheels_pos[i] - wheels_old_pos_[i]) / dt;
-    wheels_old_pos_[i] = wheels_pos[i];
-  }
-
-  if (updateFromVel(wheels_vel, time))
-  {
-    return true;
-  }
-  return false;
 }
 
 bool OdometryNode::updateFromVel(const std::vector<double> & wheels_vel, const rclcpp::Time & time)
@@ -209,19 +185,6 @@ void OdometryNode::publish_odom()
     tf_msg.transform.rotation = odom_msg.pose.pose.orientation;
     
     tf_broadcaster_->sendTransform(tf_msg);
-}
-
-void OdometryNode::resetOdometry()
-{
-  x_ = 0.0;
-  y_ = 0.0;
-  heading_ = 0.0;
-}
-void OdometryNode::setOdometry(const double & x, const double & y, const double & heading)
-{
-  x_ = x;
-  y_ = y;
-  heading_ = heading;
 }
 
 int main(int argc, char** argv)
