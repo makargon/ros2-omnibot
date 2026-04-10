@@ -152,25 +152,6 @@ Eigen::Vector3d OdometryNode::compute_robot_velocity(const std::vector<double> &
   return V;
 }
 
-// bool OdometryNode::updateOpenLoop(
-//   const double & linear_x_vel, const double & linear_y_vel, const double & angular_vel,
-//   const rclcpp::Time & time)
-// {
-//   const double dt = time.seconds() - timestamp_.seconds();
-
-//   // Integrate odometry:
-//   integrate(linear_x_vel * dt, linear_y_vel * dt, angular_vel * dt);
-
-//   timestamp_ = time;
-
-//   // Save last linear and angular velocity:
-//   linear_x_vel_ = linear_x_vel;
-//   linear_y_vel_ = linear_y_vel;
-//   angular_vel_ = angular_vel;
-
-//   return true;
-// }
-
 void OdometryNode::integrate(const double & dx, const double & dy, const double & dheading)
 {
   if (std::fabs(dheading) < 1e-6)
@@ -191,7 +172,6 @@ void OdometryNode::integrate(const double & dx, const double & dy, const double 
   }
 }
 
-
 void OdometryNode::publish_odom()
 {
     auto odom_msg = nav_msgs::msg::Odometry();
@@ -199,13 +179,50 @@ void OdometryNode::publish_odom()
     odom_msg.header.frame_id = "odom";
     odom_msg.child_frame_id = "base_footprint";
     
+    // Заполняем позицию
+    odom_msg.pose.pose.position.x = x_;
+    odom_msg.pose.pose.position.y = y_;
+    odom_msg.pose.pose.position.z = 0.0;
     
-    // odom_pub_->publish(odom_msg);
+    // Заполняем ориентацию (из угла heading_)
+    tf2::Quaternion q;
+    q.setRPY(0.0, 0.0, heading_);
+    odom_msg.pose.pose.orientation = tf2::toMsg(q);
     
+    // Заполняем ковариации (для простоты - единичные, можно потом настроить)
+    odom_msg.pose.covariance = {0.01, 0, 0, 0, 0, 0,
+                                 0, 0.01, 0, 0, 0, 0,
+                                 0, 0, 0.01, 0, 0, 0,
+                                 0, 0, 0, 0.01, 0, 0,
+                                 0, 0, 0, 0, 0.01, 0,
+                                 0, 0, 0, 0, 0, 0.01};
     
-    // tf_broadcaster_->sendTransform(tf_msg);
+    // Заполняем скорости
+    odom_msg.twist.twist.linear.x = linear_x_vel_;
+    odom_msg.twist.twist.linear.y = linear_y_vel_;
+    odom_msg.twist.twist.angular.z = angular_vel_;
+    
+    // Ковариации скоростей
+    odom_msg.twist.covariance = {0.01, 0, 0, 0, 0, 0,
+                                  0, 0.01, 0, 0, 0, 0,
+                                  0, 0, 0.01, 0, 0, 0,
+                                  0, 0, 0, 0.01, 0, 0,
+                                  0, 0, 0, 0, 0.01, 0,
+                                  0, 0, 0, 0, 0, 0.01};
+    
+    odom_pub_->publish(odom_msg);
+    
+    // Публикуем трансформацию tf
+    geometry_msgs::msg::TransformStamped tf_msg;
+    tf_msg.header = odom_msg.header;
+    tf_msg.child_frame_id = "base_footprint";
+    tf_msg.transform.translation.x = x_;
+    tf_msg.transform.translation.y = y_;
+    tf_msg.transform.translation.z = 0.0;
+    tf_msg.transform.rotation = odom_msg.pose.pose.orientation;
+    
+    tf_broadcaster_->sendTransform(tf_msg);
 }
-
 
 void OdometryNode::resetOdometry()
 {
