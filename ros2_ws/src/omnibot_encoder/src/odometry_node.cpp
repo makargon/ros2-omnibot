@@ -5,7 +5,7 @@
 
 OdometryNode::OdometryNode()
     : Node("odometry_node"),
-    timestamp_(0),
+    timestamp_(0, 0, RCL_ROS_TIME),
     x_(0.0),
     y_(0.0),
     heading_(0.0),
