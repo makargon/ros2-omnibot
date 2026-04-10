@@ -1,5 +1,5 @@
 # Transform Broadcaster Configuration
-tf_broadcaster_node:
+tf_broadcaster:
   ros__parameters:
     # Frame names
     base_frame: "base_link"
