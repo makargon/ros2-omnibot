@@ -3,4 +3,8 @@ simple_safety_stop_node:
     danger_distance: 0.5      # опасная дистанция (метры)
     warning_distance: 0.7     # дистанция предупреждения (метры)
     safety_angle: 30.0        # угол обзора (градусы)
+    lidar_angle: 120.0        # yaw лидара относительно base_link (градусы)
+    use_world_frame: true     # считать направление в мировой СК
+    world_frame: "odom"       # мировая СК
+    base_frame: "base_link"   # базовая СК робота
     enable_logging: true      # включить логирование
