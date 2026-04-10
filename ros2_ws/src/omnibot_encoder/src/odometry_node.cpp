@@ -46,65 +46,65 @@ void OdometryNode::encoder_callback(const std_msgs::msg::Int32MultiArray::Shared
   //   timestamp_ = current_time;
   //   return;
   // }
-  if (dt > 0.1) {
-    RCLCPP_WARN(this->get_logger(), "Large dt detected: %.3f s, resetting", dt);
-    timestamp_ = current_time;
-    for (size_t i = 0; i < 3 && i < msg->data.size(); ++i) {
-        last_ticks_[i] = msg->data[i];
-    }
-    return;
-  }
+//   if (dt > 0.1) {
+//     RCLCPP_WARN(this->get_logger(), "Large dt detected: %.3f s, resetting", dt);
+//     timestamp_ = current_time;
+//     for (size_t i = 0; i < 3 && i < msg->data.size(); ++i) {
+//         last_ticks_[i] = msg->data[i];
+//     }
+//     return;
+//   }
 
-    std::vector<int32_t> delta_ticks(3);
-    for (size_t i = 0; i < 3; ++i) {
-        delta_ticks[i] = msg->data[i] - last_ticks_[i];
-        last_ticks_[i] = msg->data[i];
-    }
+//     std::vector<int32_t> delta_ticks(3);
+//     for (size_t i = 0; i < 3; ++i) {
+//         delta_ticks[i] = msg->data[i] - last_ticks_[i];
+//         last_ticks_[i] = msg->data[i];
+//     }
     
-    for (size_t i = 0; i < 3; ++i) {
-        double revs = static_cast<double>(delta_ticks[i]) / params_.ticks_per_rev;
-        double wheel_distance = revs * 2.0 * M_PI * params_.wheel_radius;
-        wheel_velocities_[i] = wheel_distance / dt;
-    }
+//     for (size_t i = 0; i < 3; ++i) {
+//         double revs = static_cast<double>(delta_ticks[i]) / params_.ticks_per_rev;
+//         double wheel_distance = revs * 2.0 * M_PI * params_.wheel_radius;
+//         wheel_velocities_[i] = wheel_distance / dt;
+//     }
 
-    vx_ = (2.0 * wheel_velocities_[0] - wheel_velocities_[1] - wheel_velocities_[2]) / 3.0;
-    vy_ = (wheel_velocities_[1] - wheel_velocities_[2]) / std::sqrt(3.0);
-    vtheta_ = (wheel_velocities_[0] + wheel_velocities_[1] + wheel_velocities_[2]) / (3.0 * params_.robot_radius);
+//     vx_ = (2.0 * wheel_velocities_[0] - wheel_velocities_[1] - wheel_velocities_[2]) / 3.0;
+//     vy_ = (wheel_velocities_[1] - wheel_velocities_[2]) / std::sqrt(3.0);
+//     vtheta_ = (wheel_velocities_[0] + wheel_velocities_[1] + wheel_velocities_[2]) / (3.0 * params_.robot_radius);
 
-    vx_filter_.push_back(vx_);
-    vy_filter_.push_back(vy_);
-    vtheta_filter_.push_back(vtheta_);
+//     vx_filter_.push_back(vx_);
+//     vy_filter_.push_back(vy_);
+//     vtheta_filter_.push_back(vtheta_);
     
-    while (vx_filter_.size() > FILTER_WINDOW) vx_filter_.pop_front();
-    while (vy_filter_.size() > FILTER_WINDOW) vy_filter_.pop_front();
-    while (vtheta_filter_.size() > FILTER_WINDOW) vtheta_filter_.pop_front();
+//     while (vx_filter_.size() > FILTER_WINDOW) vx_filter_.pop_front();
+//     while (vy_filter_.size() > FILTER_WINDOW) vy_filter_.pop_front();
+//     while (vtheta_filter_.size() > FILTER_WINDOW) vtheta_filter_.pop_front();
     
-    double vx_filt = filter_average(vx_filter_);
-    double vy_filt = filter_average(vy_filter_);
-    double vtheta_filt = filter_average(vtheta_filter_);
+//     double vx_filt = filter_average(vx_filter_);
+//     double vy_filt = filter_average(vy_filter_);
+//     double vtheta_filt = filter_average(vtheta_filter_);
 
-    if (std::abs(vtheta_filt) > 1e-6) {
-        double delta_theta = vtheta_filt * dt;
-        double R_theta = vtheta_filt;
-        double V_robot = std::hypot(vx_filt, vy_filt);
-        double angle_robot = std::atan2(vy_filt, vx_filt);
+//     if (std::abs(vtheta_filt) > 1e-6) {
+//         double delta_theta = vtheta_filt * dt;
+//         double R_theta = vtheta_filt;
+//         double V_robot = std::hypot(vx_filt, vy_filt);
+//         double angle_robot = std::atan2(vy_filt, vx_filt);
         
-        double radius = V_robot / std::abs(R_theta);
-        double delta_x = radius * (std::sin(theta_ + delta_theta) - std::sin(theta_));
-        double delta_y = -radius * (std::cos(theta_ + delta_theta) - std::cos(theta_));
+//         double radius = V_robot / std::abs(R_theta);
+//         double delta_x = radius * (std::sin(theta_ + delta_theta) - std::sin(theta_));
+//         double delta_y = -radius * (std::cos(theta_ + delta_theta) - std::cos(theta_));
         
-        x_ += delta_x;
-        y_ += delta_y;
-        theta_ += delta_theta;
-    } else {
-        x_ += (vx_filt * std::cos(theta_) - vy_filt * std::sin(theta_)) * dt;
-        y_ += (vx_filt * std::sin(theta_) + vy_filt * std::cos(theta_)) * dt;
-    }
+//         x_ += delta_x;
+//         y_ += delta_y;
+//         theta_ += delta_theta;
+//     } else {
+//         x_ += (vx_filt * std::cos(theta_) - vy_filt * std::sin(theta_)) * dt;
+//         y_ += (vx_filt * std::sin(theta_) + vy_filt * std::cos(theta_)) * dt;
+//     }
     
-    while (theta_ > M_PI) theta_ -= 2.0 * M_PI;
-    while (theta_ < -M_PI) theta_ += 2.0 * M_PI;
+//     while (theta_ > M_PI) theta_ -= 2.0 * M_PI;
+//     while (theta_ < -M_PI) theta_ += 2.0 * M_PI;
     
-    last_time_ = current_time;
+//     last_time_ = current_time;
 
     publish_odom();
 }
