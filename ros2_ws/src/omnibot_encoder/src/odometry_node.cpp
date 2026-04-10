@@ -70,11 +70,6 @@ void OdometryNode::encoder_callback(const std_msgs::msg::Int32MultiArray::Shared
         wheel_velocities_[i] = wheel_distance / dt;
     }
 
-<<<<<<< HEAD
-    vx_ = (2.0 * wheel_velocities_[0] - wheel_velocities_[1] - wheel_velocities_[2]) / 3.0;
-    vy_ = (wheel_velocities_[1] - wheel_velocities_[2]) / std::sqrt(3.0);
-    vtheta_ = (wheel_velocities_[0] + wheel_velocities_[1] + wheel_velocities_[2]) / (3.0 * params_.robot_radius);
-=======
   std::vector<int32_t> delta_ticks(3);
   for (size_t i = 0; i < 3; ++i) {
     delta_ticks[i] = msg->data[i] - last_ticks_[i];
@@ -87,7 +82,6 @@ void OdometryNode::encoder_callback(const std_msgs::msg::Int32MultiArray::Shared
     // wheels_vel[i] = revs * 2.0 * M_PI * r / dt; // rad/s ---
     wheels_vel[i] = revs * 2.0 * M_PI / dt; // rad/s ---
   }
->>>>>>> bb97fa4 (node kinema test)
 
     vx_filter_.push_back(vx_);
     vy_filter_.push_back(vy_);
