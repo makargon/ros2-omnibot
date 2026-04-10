@@ -29,7 +29,7 @@ class MotorControl:
 
     def set_speed(self, speed: float) -> None: # speed приходит в м/с
         # макс скорость двигателей = 1.8 м/c
-        speed /= 1.8
+        # speed /= 1.8
         
         if speed < 0.0:
             speed = 0.0
