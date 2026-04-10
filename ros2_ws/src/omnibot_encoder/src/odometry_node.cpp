@@ -5,8 +5,7 @@
 
 OdometryNode::OdometryNode()
     : Node("odometry_node"),
-    timestamp_(0, 0, RCL_ROS_TIME),
-    last_time_(0, 0, RCL_ROS_TIME),
+    timestamp_(0),
     x_(0.0),
     y_(0.0),
     heading_(0.0),
@@ -48,14 +47,14 @@ OdometryNode::OdometryNode()
 void OdometryNode::encoder_callback(const std_msgs::msg::Int32MultiArray::SharedPtr msg)
 {
     rclcpp::Time current_time = this->now();
-    double dt = (current_time - last_time_).seconds();
+    double dt = (current_time - timestamp_).seconds();
     if (dt < 0.0001) {
-        last_time_ = current_time;
+        timestamp_ = current_time;
         return;
     }
     if (dt > 0.1) {
         RCLCPP_WARN(this->get_logger(), "Large dt detected: %.3f s, resetting", dt);
-        last_time_ = current_time;
+        timestamp_ = current_time;
         for (size_t i = 0; i < 3 && i < msg->data.size(); ++i) {
             last_ticks_[i] = msg->data[i];
         }
@@ -75,11 +74,11 @@ void OdometryNode::encoder_callback(const std_msgs::msg::Int32MultiArray::Shared
     }
 
     // мб убрать
-    if (timestamp_.seconds() == 0.0 && timestamp_.nanoseconds() == 0) {
-        timestamp_ = current_time;
-        last_time_ = current_time;
-        return;
-    }
+    // if (timestamp_.seconds() == 0.0 && timestamp_.nanoseconds() == 0) {
+    //     timestamp_ = current_time;
+    //     last_time_ = current_time;
+    //     return;
+    // }
 
     updateFromVel(wheels_vel, current_time);
 }

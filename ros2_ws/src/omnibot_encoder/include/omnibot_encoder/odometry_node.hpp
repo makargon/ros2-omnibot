@@ -59,7 +59,6 @@ private:
     // Previous wheel positions/states [rads]:
     std::vector<double> wheels_old_pos_;
 
-    rclcpp::Time last_time_;
     double ticks_per_rev_;
     std::vector<int32_t> last_ticks_;
     
