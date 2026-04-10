@@ -70,16 +70,16 @@ EncoderNode::EncoderNode()
         throw std::runtime_error("Cannot open GPIO chip");
     }
 
-    this->declare_parameter("encoder1.pin_a", 10);
-    this->declare_parameter("encoder1.pin_b", 9);
+    this->declare_parameter("encoder1.pin_a", 21);
+    this->declare_parameter("encoder1.pin_b", 20);
     this->declare_parameter("encoder1.cpr", 390);
 
     this->declare_parameter("encoder2.pin_a", 19);
     this->declare_parameter("encoder2.pin_b", 13);
     this->declare_parameter("encoder2.cpr", 390);
 
-    this->declare_parameter("encoder3.pin_a", 20);
-    this->declare_parameter("encoder3.pin_b", 21);
+    this->declare_parameter("encoder3.pin_a", 9);
+    this->declare_parameter("encoder3.pin_b", 10);
     this->declare_parameter("encoder3.cpr", 390);
 
     int e1a = this->get_parameter("encoder1.pin_a").as_int();
