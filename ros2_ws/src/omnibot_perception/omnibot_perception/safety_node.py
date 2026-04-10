@@ -3,6 +3,7 @@ from rclpy.node import Node
 from sensor_msgs.msg import LaserScan
 from geometry_msgs.msg import Twist
 import math
+from typing import List
 
 class SimpleSafetyStopNode(Node):
     """
@@ -23,9 +24,14 @@ class SimpleSafetyStopNode(Node):
         
         self.danger_distance = self.get_parameter('danger_distance').value
         self.warning_distance = self.get_parameter('warning_distance').value
-        self.safety_angle = math.radians(self.get_parameter('safety_angle').value)
         self.enable_logging = self.get_parameter('enable_logging').value
-        
+
+        self.filter_angles_list = [
+            (math.radians(175), math.radians(185)),   # фильтр для задней стойки
+            (math.radians(135), math.radians(225)),  # фильтр для передней левой стойки
+            (math.radians(45), math.radians(135)),   # фильтр для передней правой стойки
+        ]
+        self.min_filter_distance = 0.05  # минимальное расстояние для фильтрации (метры)
         # === данные ===
         self.latest_scan = None
         self.latest_cmd_vel = None
@@ -101,6 +107,11 @@ class SimpleSafetyStopNode(Node):
             elif point_angle < -math.pi:
                 point_angle += 2 * math.pi
             
+            for filter_min_rad, filter_max_rad in self.filter_angles_list:
+                if filter_min_rad <= point_angle <= filter_max_rad:
+                    # точка попадает в фильтр, пропускаем её
+                    break
+
             # считаем разницу между направлением движения и направлением на точку
             angle_diff = abs(point_angle - direction_angle)
             
@@ -108,10 +119,8 @@ class SimpleSafetyStopNode(Node):
             if angle_diff > math.pi:
                 angle_diff = 2 * math.pi - angle_diff
             
-            # проверяем, попадает ли точка в сектор обзора
-            if angle_diff <= self.safety_angle:
-                if distance < min_distance:
-                    min_distance = distance
+            if distance < min_distance:
+                min_distance = distance
         
         if min_distance == float('inf'):
             return None

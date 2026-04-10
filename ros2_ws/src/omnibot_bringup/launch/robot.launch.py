@@ -42,6 +42,7 @@ def generate_launch_description() -> LaunchDescription:
         _include('omnibot_kinematic', 'kinematic.launch.py', IfCondition(with_control)),
 
         _include('omnibot_perception', 'lidar.launch.py', IfCondition(with_lidar)),
+        _include('omnibot_perception', 'safety_node.launch.py', IfCondition(with_lidar)),
         Node(
             package='foxglove_bridge',
             executable='foxglove_bridge',
