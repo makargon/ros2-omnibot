@@ -1,10 +1,9 @@
 import rclpy
 from rclpy.node import Node
-from rclpy.time import Time
 from sensor_msgs.msg import LaserScan
 from geometry_msgs.msg import Twist
-from tf2_ros import Buffer, TransformListener, TransformException
 import math
+from typing import List
 
 class SimpleSafetyStopNode(Node):
     """
@@ -22,18 +21,12 @@ class SimpleSafetyStopNode(Node):
         self.declare_parameter('warning_distance', 0.7)   # дистанция предупреждения
         self.declare_parameter('safety_angle', 30.0)      # угол обзора (градусы)
         self.declare_parameter('lidar_angle', 0.0)        # yaw лидара относительно base_link (градусы)
-        self.declare_parameter('use_world_frame', True)   # считать углы в мировой СК
-        self.declare_parameter('world_frame', 'odom')
-        self.declare_parameter('base_frame', 'base_link')
         self.declare_parameter('enable_logging', True)
         
         self.danger_distance = self.get_parameter('danger_distance').value
         self.warning_distance = self.get_parameter('warning_distance').value
         self.enable_logging = self.get_parameter('enable_logging').value
         self.lidar_angle_rad = math.radians(float(self.get_parameter('lidar_angle').value))
-        self.use_world_frame = self.get_parameter('use_world_frame').value
-        self.world_frame = self.get_parameter('world_frame').value
-        self.base_frame = self.get_parameter('base_frame').value
 
         self.filter_angles_list = [
             (math.radians(175), math.radians(185)),   # фильтр для задней стойки
@@ -46,10 +39,6 @@ class SimpleSafetyStopNode(Node):
         # === данные ===
         self.latest_scan = None
         self.latest_cmd_vel = None
-
-        # === tf для мировой системы координат ===
-        self.tf_buffer = Buffer()
-        self.tf_listener = TransformListener(self.tf_buffer, self)
         
         # === подписчики ===
         self.scan_subscriber = self.create_subscription(
@@ -78,39 +67,6 @@ class SimpleSafetyStopNode(Node):
         
         self.get_logger().info('простая safety нода запущена')
         self.get_logger().info(f'опасная дистанция: {self.danger_distance}м')
-
-    @staticmethod
-    def normalize_angle(angle: float) -> float:
-        """Нормализует угол в диапазон [-π, π]."""
-        while angle > math.pi:
-            angle -= 2.0 * math.pi
-        while angle < -math.pi:
-            angle += 2.0 * math.pi
-        return angle
-
-    def get_robot_yaw_in_world(self):
-        """Возвращает yaw робота (base_frame) в world_frame."""
-        if not self.use_world_frame:
-            return 0.0
-
-        try:
-            transform = self.tf_buffer.lookup_transform(
-                self.world_frame,
-                self.base_frame,
-                Time()
-            )
-            q = transform.transform.rotation
-            yaw = math.atan2(
-                2.0 * (q.w * q.z + q.x * q.y),
-                1.0 - 2.0 * (q.y * q.y + q.z * q.z)
-            )
-            return yaw
-        except TransformException as ex:
-            if self.enable_logging:
-                self.get_logger().warn(
-                    f'нет TF {self.world_frame}->{self.base_frame}: {ex}'
-                )
-            return None
     
     def scan_callback(self, msg):
         """сохраняет данные с лидара"""
@@ -121,7 +77,7 @@ class SimpleSafetyStopNode(Node):
         self.latest_cmd_vel = msg
         self.safety_check()  # сразу проверяем при новой команде
     
-    def get_min_distance_in_direction(self, direction_angle, robot_yaw=0.0):
+    def get_min_distance_in_direction(self, direction_angle):
         """
         ищет минимальное расстояние до препятствия в заданном направлении
         
@@ -146,27 +102,21 @@ class SimpleSafetyStopNode(Node):
                 continue
             
             # угол текущей точки в системе лидара
-            point_angle_base = angle_min + i * angle_increment
+            point_angle = angle_min + i * angle_increment
 
             # переводим угол в систему base_link с учётом поворота лидара
-            point_angle_base += self.lidar_angle_rad
-            point_angle_base = self.normalize_angle(point_angle_base)
+            point_angle += self.lidar_angle_rad
             
-            is_filtered = False
+            # нормализуем угол в диапазон [-π, π]
+            if point_angle > math.pi:
+                point_angle -= 2 * math.pi
+            elif point_angle < -math.pi:
+                point_angle += 2 * math.pi
+            
             for filter_min_rad, filter_max_rad in self.filter_angles_list:
-                if filter_min_rad <= point_angle_base <= filter_max_rad:
+                if filter_min_rad <= point_angle <= filter_max_rad:
                     # точка попадает в фильтр, пропускаем её
-                    is_filtered = True
                     break
-            if is_filtered:
-                continue
-
-            point_angle = point_angle_base
-
-            # при необходимости переводим в мировую СК
-            if self.use_world_frame:
-                point_angle += robot_yaw
-                point_angle = self.normalize_angle(point_angle)
 
             # считаем разницу между направлением движения и направлением на точку
             angle_diff = abs(point_angle - direction_angle)
@@ -184,7 +134,7 @@ class SimpleSafetyStopNode(Node):
         
         return min_distance
     
-    def get_movement_direction(self, robot_yaw=0.0):
+    def get_movement_direction(self):
         """
         определяет направление движения из вектора скорости
         
@@ -205,11 +155,6 @@ class SimpleSafetyStopNode(Node):
         
         # вычисляем угол направления движения
         direction = math.atan2(linear_y, linear_x)
-
-        # при необходимости переводим в мировую СК
-        if self.use_world_frame:
-            direction += robot_yaw
-            direction = self.normalize_angle(direction)
         
         return direction
     
@@ -225,13 +170,8 @@ class SimpleSafetyStopNode(Node):
         if self.latest_cmd_vel is None:
             return
         
-        robot_yaw = self.get_robot_yaw_in_world()
-        if self.use_world_frame and robot_yaw is None:
-            # без TF в мировой СК нельзя корректно посчитать направление
-            return
-
         # определяем куда хочет ехать робот
-        direction = self.get_movement_direction(robot_yaw=robot_yaw if robot_yaw is not None else 0.0)
+        direction = self.get_movement_direction()
         
         # если робот стоит - ничего не делаем
         if direction is None:
@@ -239,10 +179,7 @@ class SimpleSafetyStopNode(Node):
             return
         
         # получаем расстояние до препятствия в направлении движения
-        distance = self.get_min_distance_in_direction(
-            direction,
-            robot_yaw=robot_yaw if robot_yaw is not None else 0.0
-        )
+        distance = self.get_min_distance_in_direction(direction)
         
         # если нет препятствий в этом направлении
         if distance is None:
