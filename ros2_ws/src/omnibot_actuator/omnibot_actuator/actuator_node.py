@@ -26,10 +26,10 @@ class MotorControl:
         else:
             lgpio.gpio_write(self.chip, self.pin_b, 1)
             lgpio.gpio_write(self.chip, self.pin_a, 0)
-            
+
         a = lgpio.gpio_read(self.chip, self.pin_a)
         b = lgpio.gpio_read(self.chip, self.pin_b)
-        self.logger.info(f"  actual: a={a}, b={b}")
+        print(f"  actual: a={a}, b={b}")
 
     def set_speed(self, speed: float) -> None: # speed приходит в м/с
         # макс скорость двигателей = 1.8 м/c
