@@ -69,9 +69,9 @@ void PIDWheelNode::timer_callback()
         return;
     }
     
-    if (std::all_of(measurement_, measurement_ + NUM_WHEELS, [](double v) { return v == 0.0; })) {
-        return;
-    }
+    // if (std::all_of(measurement_, measurement_ + NUM_WHEELS, [](double v) { return v == 0.0; })) {
+    //     return;
+    // }
 
     static rclcpp::Time last_call = this->now();
     auto now = this->now();
