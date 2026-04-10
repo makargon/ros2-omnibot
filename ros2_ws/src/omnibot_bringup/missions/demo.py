@@ -12,27 +12,35 @@ class DemoNode(Node):
 
     def timer_callback(self):
         """Бесконечно двигается по квадрату раз в секунду"""
-        while rclpy.ok():
-            msg = Twist()
-            msg.angular.z = 0.0
-            msg.linear.x = 0.2
-            msg.linear.y = 0.0
-            self.publisher.publish(msg)
-            self.get_logger().info('Published cmd_vel: linear.x=%.2f angular.z=%.2f' % (msg.linear.x, msg.angular.z))
-            #Pause for 2 seconds
-            rclpy.sleep(1)
-            msg.linear.x = 0.0
-            msg.linear.y = 0.2
-            self.publisher.publish(msg)
-            self.get_logger().info('Published cmd_vel: linear.x=%.2f linear.y=%.2f' % (msg.linear.x, msg.linear.y))
-            rclpy.sleep(1)
-            msg.linear.x = -0.2
-            msg.linear.y = 0.0
-            self.publisher.publish(msg)
-            self.get_logger().info('Published cmd_vel: linear.x=%.2f angular.z=%.2f' % (msg.linear.x, msg.angular.z))
-            rclpy.sleep(1)
-            msg.linear.x = 0.0
-            msg.linear.y = -0.2
-            self.publisher.publish(msg)
-            self.get_logger().info('Published cmd_vel: linear.y=%.2f' % (msg.linear.y))
-            rclpy.sleep(1)
+        
+        msg = Twist()
+        msg.angular.z = 0.0
+        msg.linear.x = 0.2
+        msg.linear.y = 0.0
+        self.publisher.publish(msg)
+        self.get_logger().info('Published cmd_vel: linear.x=%.2f angular.z=%.2f' % (msg.linear.x, msg.angular.z))
+        #Pause for 2 seconds
+        rclpy.sleep(1)
+        msg.linear.x = 0.0
+        msg.linear.y = 0.2
+        self.publisher.publish(msg)
+        self.get_logger().info('Published cmd_vel: linear.x=%.2f linear.y=%.2f' % (msg.linear.x, msg.linear.y))
+        rclpy.sleep(1)
+        msg.linear.x = -0.2
+        msg.linear.y = 0.0
+        self.publisher.publish(msg)
+        self.get_logger().info('Published cmd_vel: linear.x=%.2f angular.z=%.2f' % (msg.linear.x, msg.angular.z))
+        rclpy.sleep(1)
+        msg.linear.x = 0.0
+        msg.linear.y = -0.2
+        self.publisher.publish(msg)
+        self.get_logger().info('Published cmd_vel: linear.y=%.2f' % (msg.linear.y))
+        rclpy.sleep(1)
+
+
+if __name__ == '__main__':
+    rclpy.init()
+    node = DemoNode()
+    rclpy.spin(node)
+    node.destroy_node()
+    rclpy.shutdown()

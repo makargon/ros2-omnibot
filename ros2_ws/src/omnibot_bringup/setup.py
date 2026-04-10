@@ -21,5 +21,9 @@ setup(
     description='Common launch files for omnibot stack.',
     license='MIT',
     tests_require=['pytest'],
-    entry_points={'console_scripts': []},
+    entry_points={'console_scripts': [
+        'robot_launch = omnibot_bringup.launch.robot_launch:generate_launch_description',
+    ]},
+    scripts=[
+        'missions/demo.py',
 )
