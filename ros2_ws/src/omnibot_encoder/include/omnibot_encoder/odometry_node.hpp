@@ -22,6 +22,7 @@ public:
     bool updateFromPos(const std::vector<double> & wheels_pos, const rclcpp::Time & time);
     bool updateFromVel(const std::vector<double> & wheels_vel, const rclcpp::Time & time);
     void setOdometry(const double & x, const double & y, const double & heading);
+    void resetOdometry();
 
     double getX() const { return x_; }
     double getY() const { return y_; }

@@ -69,8 +69,8 @@ void OdometryNode::encoder_callback(const std_msgs::msg::Int32MultiArray::Shared
     
     for (size_t i = 0; i < 3; ++i) {
         double revs = static_cast<double>(delta_ticks[i]) / ticks_per_rev_;
-        double wheel_angular_vel = revs * 2.0 * M_PI / dt; // rad/s
-        wheel_angular_velocities[i] = wheel_angular_vel;
+        // double wheel_angular_vel = revs * 2.0 * M_PI / dt; // rad/s
+        wheel_angular_vel[i] = revs * 2.0 * M_PI / dt;
     }
 
     // мб убрать
@@ -80,7 +80,7 @@ void OdometryNode::encoder_callback(const std_msgs::msg::Int32MultiArray::Shared
         return;
     }
 
-    updateFromVel(wheel_angular_velocities, current_time);
+    updateFromVel(wheel_angular_vel, current_time);
 }
 
 bool OdometryNode::updateFromPos(const std::vector<double> & wheels_pos, const rclcpp::Time & time)
@@ -152,24 +152,24 @@ Eigen::Vector3d OdometryNode::compute_robot_velocity(const std::vector<double> &
   return V;
 }
 
-bool OdometryNode::updateOpenLoop(
-  const double & linear_x_vel, const double & linear_y_vel, const double & angular_vel,
-  const rclcpp::Time & time)
-{
-  const double dt = time.seconds() - timestamp_.seconds();
+// bool OdometryNode::updateOpenLoop(
+//   const double & linear_x_vel, const double & linear_y_vel, const double & angular_vel,
+//   const rclcpp::Time & time)
+// {
+//   const double dt = time.seconds() - timestamp_.seconds();
 
-  // Integrate odometry:
-  integrate(linear_x_vel * dt, linear_y_vel * dt, angular_vel * dt);
+//   // Integrate odometry:
+//   integrate(linear_x_vel * dt, linear_y_vel * dt, angular_vel * dt);
 
-  timestamp_ = time;
+//   timestamp_ = time;
 
-  // Save last linear and angular velocity:
-  linear_x_vel_ = linear_x_vel;
-  linear_y_vel_ = linear_y_vel;
-  angular_vel_ = angular_vel;
+//   // Save last linear and angular velocity:
+//   linear_x_vel_ = linear_x_vel;
+//   linear_y_vel_ = linear_y_vel;
+//   angular_vel_ = angular_vel;
 
-  return true;
-}
+//   return true;
+// }
 
 void OdometryNode::integrate(const double & dx, const double & dy, const double & dheading)
 {
@@ -200,10 +200,10 @@ void OdometryNode::publish_odom()
     odom_msg.child_frame_id = "base_footprint";
     
     
-    odom_pub_->publish(odom_msg);
+    // odom_pub_->publish(odom_msg);
     
     
-    tf_broadcaster_->sendTransform(tf_msg);
+    // tf_broadcaster_->sendTransform(tf_msg);
 }
 
 
