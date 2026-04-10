@@ -43,7 +43,7 @@ class KinematicNode(Node):
 
         w3 = coef * (-vy - l * wz) / r
         w1 = coef * ((sqrt3 / 2) * vx + 0.5 * vy - l * wz ) / r 
-        w1 = coef * (- 0.5 * vx + (sqrt3 / 2) * vy - l * wz ) / r
+        # w1 = coef * (- 0.5 * vx + (sqrt3 / 2) * vy - l * wz ) / r
         w2 = coef * (- (sqrt3 / 2) * vx + 0.5 * vy - l * wz) / r
 
         wheel_msg = Float32MultiArray()
