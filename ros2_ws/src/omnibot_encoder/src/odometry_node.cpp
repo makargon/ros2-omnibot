@@ -12,18 +12,12 @@ OdometryNode::OdometryNode()
     linear_x_vel_(0.0),
     linear_y_vel_(0.0),
     angular_vel_(0.0),
-    robot_radius_(0.0),
-    wheel_radius_(0.0),
+    robot_radius_(0.15),
+    wheel_radius_(0.05),
+    ticks_per_rev_(390),
     wheels_old_pos_(0.0)
 {
-    // this->declare_parameter("wheel_radius", 0.05);
-    // this->declare_parameter("robot_radius", 0.15);
-    // this->declare_parameter("ticks_per_rev", 390.0);
-    
-    wheel_radius_ = 0.05; //this->get_parameter("wheel_radius").as_double();
-    robot_radius_ = 0.15; //this->get_parameter("robot_radius").as_double();
-    ticks_per_rev_ = 390; //this->get_parameter("ticks_per_rev").as_double();
-
+  
     encoder_sub_ = this->create_subscription<std_msgs::msg::Int32MultiArray>(
         "/encoder_ticks", 10,
         std::bind(&OdometryNode::encoder_callback, this, std::placeholders::_1));
@@ -73,13 +67,6 @@ void OdometryNode::encoder_callback(const std_msgs::msg::Int32MultiArray::Shared
         double revs = static_cast<double>(delta_ticks[i]) / ticks_per_rev_;
         wheels_vel[i] = revs * 2.0 * M_PI / dt; // rad/s
     }
-
-    // мб убрать
-    // if (timestamp_.seconds() == 0.0 && timestamp_.nanoseconds() == 0) {
-    //     timestamp_ = current_time;
-    //     last_time_ = current_time;
-    //     return;
-    // }
 
     updateFromVel(wheels_vel, current_time);
 }
