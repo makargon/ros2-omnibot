@@ -55,6 +55,23 @@ void OdometryNode::encoder_callback(const std_msgs::msg::Int32MultiArray::Shared
     return;
   }
 
+    std::vector<int32_t> delta_ticks(3);
+    for (size_t i = 0; i < 3; ++i) {
+        delta_ticks[i] = msg->data[i] - last_ticks_[i];
+        last_ticks_[i] = msg->data[i];
+    }
+    
+    for (size_t i = 0; i < 3; ++i) {
+        double revs = static_cast<double>(delta_ticks[i]) / params_.ticks_per_rev;
+        double wheel_distance = revs * 2.0 * M_PI * params_.wheel_radius;
+        wheel_velocities_[i] = wheel_distance / dt;
+    }
+
+<<<<<<< HEAD
+    vx_ = (2.0 * wheel_velocities_[0] - wheel_velocities_[1] - wheel_velocities_[2]) / 3.0;
+    vy_ = (wheel_velocities_[1] - wheel_velocities_[2]) / std::sqrt(3.0);
+    vtheta_ = (wheel_velocities_[0] + wheel_velocities_[1] + wheel_velocities_[2]) / (3.0 * params_.robot_radius);
+=======
   std::vector<int32_t> delta_ticks(3);
   for (size_t i = 0; i < 3; ++i) {
     delta_ticks[i] = msg->data[i] - last_ticks_[i];
@@ -67,73 +84,51 @@ void OdometryNode::encoder_callback(const std_msgs::msg::Int32MultiArray::Shared
     // wheels_vel[i] = revs * 2.0 * M_PI * r / dt; // rad/s ---
     wheels_vel[i] = revs * 2.0 * M_PI / dt; // rad/s ---
   }
+>>>>>>> bb97fa4 (node kinema test)
 
-  updateFromVel(wheels_vel, current_time);
+    vx_filter_.push_back(vx_);
+    vy_filter_.push_back(vy_);
+    vtheta_filter_.push_back(vtheta_);
+    
+    while (vx_filter_.size() > FILTER_WINDOW) vx_filter_.pop_front();
+    while (vy_filter_.size() > FILTER_WINDOW) vy_filter_.pop_front();
+    while (vtheta_filter_.size() > FILTER_WINDOW) vtheta_filter_.pop_front();
+    
+    double vx_filt = filter_average(vx_filter_);
+    double vy_filt = filter_average(vy_filter_);
+    double vtheta_filt = filter_average(vtheta_filter_);
+
+    if (std::abs(vtheta_filt) > 1e-6) {
+        double delta_theta = vtheta_filt * dt;
+        double R_theta = vtheta_filt;
+        double V_robot = std::hypot(vx_filt, vy_filt);
+        double angle_robot = std::atan2(vy_filt, vx_filt);
+        
+        double radius = V_robot / std::abs(R_theta);
+        double delta_x = radius * (std::sin(theta_ + delta_theta) - std::sin(theta_));
+        double delta_y = -radius * (std::cos(theta_ + delta_theta) - std::cos(theta_));
+        
+        x_ += delta_x;
+        y_ += delta_y;
+        theta_ += delta_theta;
+    } else {
+        x_ += (vx_filt * std::cos(theta_) - vy_filt * std::sin(theta_)) * dt;
+        y_ += (vx_filt * std::sin(theta_) + vy_filt * std::cos(theta_)) * dt;
+    }
+    
+    while (theta_ > M_PI) theta_ -= 2.0 * M_PI;
+    while (theta_ < -M_PI) theta_ += 2.0 * M_PI;
+    
+    last_time_ = current_time;
+
+    publish_odom();
 }
 
-bool OdometryNode::updateFromVel(const std::vector<double> & wheels_vel, const rclcpp::Time & time)
+double OdometryNode::filter_average(const std::deque<double>& window)
 {
-  const double dt = time.seconds() - timestamp_.seconds();
-
-  // Compute linear and angular velocities of the robot:
-  const Eigen::Vector3d robot_velocity = compute_robot_velocity(wheels_vel);
-
-  // Integrate odometry:
-  integrate(robot_velocity(0) * dt, robot_velocity(1) * dt, robot_velocity(2) * dt);
-
-  timestamp_ = time;
-
-  linear_x_vel_ = robot_velocity(0);
-  linear_y_vel_ = robot_velocity(1);
-  angular_vel_ = robot_velocity(2);
-
-  return true;
-}
-
-Eigen::Vector3d OdometryNode::compute_robot_velocity(const std::vector<double> & wheels_vel) const
-{
-  Eigen::MatrixXd A(wheels_vel.size(), 3);   // Transformation Matrix
-  Eigen::VectorXd omega(wheels_vel.size());  // Wheel angular velocities vector
-
-  const double angle_bw_wheels = (2 * M_PI) / static_cast<double>(wheels_vel.size());
-
-  for (size_t i = 0; i < wheels_vel.size(); ++i)
-  {
-    // Define the transformation matrix
-    const double theta = (angle_bw_wheels * static_cast<double>(i));
-    A(static_cast<int>(i), 0) = std::sin(theta);
-    A(static_cast<int>(i), 1) = -std::cos(theta);
-    A(static_cast<int>(i), 2) = -robot_radius_;
-
-    // Define the wheel angular velocities vector
-    omega(static_cast<int>(i)) = wheels_vel[i];
-  }
-
-  // Compute the robot velocities using SVD decomposition
-  const Eigen::Vector3d V =
-    A.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(omega * wheel_radius_);
-
-  return V;
-}
-
-void OdometryNode::integrate(const double & dx, const double & dy, const double & dheading)
-{
-  if (std::fabs(dheading) < 1e-6)
-  {
-    // For very small dheading, approximate to linear motion
-    x_ = x_ + ((dx * std::cos(heading_)) - (dy * std::sin(heading_)));
-    y_ = y_ + ((dx * std::sin(heading_)) + (dy * std::cos(heading_)));
-    heading_ = heading_ + dheading;
-  }
-  else
-  {
-    const double heading_old = heading_;
-    heading_ = heading_ + dheading;
-    x_ = x_ + ((dx / dheading) * (std::sin(heading_) - std::sin(heading_old))) +
-         ((dy / dheading) * (std::cos(heading_) - std::cos(heading_old)));
-    y_ = y_ - (dx / dheading) * (std::cos(heading_) - std::cos(heading_old)) +
-         (dy / dheading) * (std::sin(heading_) - std::sin(heading_old));
-  }
+    if (window.empty()) return 0.0;
+    double sum = std::accumulate(window.begin(), window.end(), 0.0);
+    return sum / window.size();
 }
 
 void OdometryNode::publish_odom()
