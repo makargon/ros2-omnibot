@@ -10,4 +10,4 @@ tf_broadcaster:
     lidar_x: 0.0
     lidar_y: 0.0
     lidar_z: 0.1    # 10 cm above base
-    lidar_angle: 120    # yaw rotation of lidar relative to base_link, in degrees
+    lidar_angle: 210    # yaw rotation of lidar relative to base_link, in degrees
