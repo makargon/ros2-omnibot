@@ -26,7 +26,7 @@ class TFBroadcasterNode(Node):
         self.declare_parameter('lidar_x', 0.0)
         self.declare_parameter('lidar_y', 0.0)
         self.declare_parameter('lidar_z', 0.1)
-        self.declare_parameter('lidar_angle', 0.0)
+        self.declare_parameter('lidar_angle', 0)
         
         self.base_frame = self.get_parameter('base_frame').value
         self.odom_frame = self.get_parameter('odom_frame').value
