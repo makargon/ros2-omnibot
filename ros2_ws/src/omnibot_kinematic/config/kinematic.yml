@@ -1,0 +1,6 @@
+/**:
+  ros__parameters:
+    use_sim_time: false
+    wheel_radius: 0.05
+    wheel_base: 0.15
+    cmd_frame_rotation_deg: 0.0
