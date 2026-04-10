@@ -16,9 +16,9 @@ PIDWheelNode::PIDWheelNode() : Node("pid_wheel_node"),
         pid.tau = 0.05f;
         pid.limMin = -1 * 1.8 * 0.05;
         pid.limMax = 1.8 * 0.05;
-        pid.limMinInt = -0.2;
-        pid.limMaxInt = 0.2;
-        pid.T = 0.05f;
+        pid.limMinInt = -0.01;
+        pid.limMaxInt = 0.01;
+        pid.T = 0.0001f;
     }
     
     this->declare_parameter("wheel_radius", 0.05);
