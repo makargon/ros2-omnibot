@@ -19,12 +19,15 @@ class MotorControl:
     pca: PCA9685
     chip: Any
 
-    def set_dir(self, dir: bool) -> None:
-        if dir:
+    def set_dir(self, dir: float) -> None:
+        if dir > 0:
             lgpio.gpio_write(self.chip, self.pin_a, 1)
             lgpio.gpio_write(self.chip, self.pin_b, 0)
-        else:
+        elif  dir < 0:
             lgpio.gpio_write(self.chip, self.pin_b, 1)
+            lgpio.gpio_write(self.chip, self.pin_a, 0)
+        else:
+            lgpio.gpio_write(self.chip, self.pin_b, 0)
             lgpio.gpio_write(self.chip, self.pin_a, 0)
 
         # a = lgpio.gpio_read(self.chip, self.pin_a)
@@ -100,7 +103,7 @@ class ActuatorNode(Node):
 
     def motor_callback(self, msg: Float32MultiArray) -> None:
         for motor, speed in zip(self.motors, msg.data):
-            motor.set_dir(speed > 0)
+            motor.set_dir(speed)
             motor.set_speed(abs(speed))
 
     # TODO Для серв необходима калибровка - непонятно в каком положении сейчас находится -> нет смысла ставить ограничения
