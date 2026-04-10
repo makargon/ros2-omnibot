@@ -78,8 +78,8 @@ def generate_launch_description():
         # safety нода (останавливает при препятствиях)
         Node(
             package='omnibot_perception',
-            executable='simple_safety_stop_node',
-            name='simple_safety_stop_node',
+            executable='safety_node',
+            name='safety_node',
             parameters=[safety_config_file],
             remappings=[
                 ('cmd_vel', 'cmd_vel'),           # входная команда скорости
