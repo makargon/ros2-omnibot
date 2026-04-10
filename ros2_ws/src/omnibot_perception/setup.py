@@ -25,6 +25,7 @@ setup(
         'console_scripts': [
             'lidar_node = omnibot_perception.lidar_node:main',
             'tf_broadcaster = omnibot_perception.tf_broadcaster:main',
+            'safety_node = omnibot_perception.safety_node:main'
         ],
     },
 )
