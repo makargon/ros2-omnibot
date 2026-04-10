@@ -80,7 +80,7 @@ void OdometryNode::encoder_callback(const std_msgs::msg::Int32MultiArray::Shared
         return;
     }
 
-    updateFromVel(wheel_angular_vel, current_time);
+    updateFromVel(wheels_vel, current_time);
 }
 
 bool OdometryNode::updateFromPos(const std::vector<double> & wheels_pos, const rclcpp::Time & time)
