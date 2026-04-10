@@ -17,10 +17,10 @@ class SimpleSafetyStopNode(Node):
         super().__init__('simple_safety_stop_node')
         
         # === параметры ===
-        self.declare_parameter('danger_distance', 0.5)    # опасная дистанция (метры)
-        self.declare_parameter('warning_distance', 0.7)   # дистанция предупреждения
+        self.declare_parameter('danger_distance', 0.4)    # опасная дистанция (метры)
+        self.declare_parameter('warning_distance', 0.55)   # дистанция предупреждения
         self.declare_parameter('safety_angle', 30.0)      # угол обзора (градусы)
-        self.declare_parameter('lidar_angle', 0.0)        # yaw лидара относительно base_link (градусы)
+        self.declare_parameter('lidar_angle', 210.0)        # yaw лидара относительно base_link (градусы)
         self.declare_parameter('enable_logging', True)
         
         self.danger_distance = self.get_parameter('danger_distance').value

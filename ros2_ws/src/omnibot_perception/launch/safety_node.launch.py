@@ -16,22 +16,16 @@ def generate_launch_description():
     tf_config_file = os.path.join(omnibot_perception_dir, 'config', 'tf_broadcaster.yaml')
     safety_config_file = os.path.join(omnibot_perception_dir, 'config', 'safety.yaml')
     
-    # объявляем аргументы запуска
-    lidar_port = DeclareLaunchArgument(
-        'lidar_port',
-        default_value='/dev/ttyUSB0',
-        description='последовательный порт для подключения лидара'
-    )
-    
+
     danger_distance = DeclareLaunchArgument(
         'danger_distance',
-        default_value='0.5',
+        default_value='0.4',
         description='опасная дистанция для аварийной остановки (метры)'
     )
     
     warning_distance = DeclareLaunchArgument(
         'warning_distance',
-        default_value='1.0',
+        default_value='0.55',
         description='дистанция для предупреждения (метры)'
     )
     
