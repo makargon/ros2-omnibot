@@ -31,10 +31,10 @@ class MotorControl:
         # макс скорость двигателей = 1.8 м/c
         # speed /= 1.8
         
-        if speed < 0.0:
-            speed = 0.0
-        elif speed > 1.0:
-            speed = 1.0
+        # if speed < 0.0:
+        #     speed = 0.0
+        # elif speed > 1.0:
+        #     speed = 1.0
         duty = int(speed * 65535)
         self.pca.channels[self.pwm_channel].duty_cycle = duty
 
