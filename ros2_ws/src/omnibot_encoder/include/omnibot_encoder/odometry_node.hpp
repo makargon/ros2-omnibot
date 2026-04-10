@@ -35,6 +35,7 @@ private:
     void encoder_callback(const std_msgs::msg::Int32MultiArray::SharedPtr msg);
     Eigen::Vector3d compute_robot_velocity(const std::vector<double> & wheels_vel) const;
     void integrate(const double & dx, const double & dy, const double & dheading);
+    double filter_average(const std::deque<double>& window);
     void publish_odom();
     
     // Current timestamp:
@@ -53,8 +54,12 @@ private:
     // Robot kinematic parameters:
     double robot_radius_;  // [m]
     double wheel_radius_;  // [m]
-    // double wheel_offset_;  // [rads]
         
+    double vx_;
+    double vy_;
+    double vtheta_;
+
+
     // Previous wheel positions/states [rads]:
     std::vector<double> wheels_old_pos_;
 

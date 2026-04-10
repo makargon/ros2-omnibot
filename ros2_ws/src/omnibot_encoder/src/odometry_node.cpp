@@ -6,6 +6,7 @@
 OdometryNode::OdometryNode()
     : Node("odometry_node"),
     timestamp_(this->now()),
+    last_time_ (timestamp_),
     x_(0.0),
     y_(0.0),
     heading_(0.0),
@@ -37,84 +38,84 @@ OdometryNode::OdometryNode()
       "Params: wheel_radius=%.3f, robot_radius=%.3f, ticks_per_rev=%.0f",
       wheel_radius_, robot_radius_, ticks_per_rev_);
 }
+void OdometryNode::encoder_callback(const std_msgs::msg::Int32MultiArray::SharedPtr msg) {
+    if (msg->data.size() < 3) return;
 
-void OdometryNode::encoder_callback(const std_msgs::msg::Int32MultiArray::SharedPtr msg)
-{
-  rclcpp::Time current_time = this->now();
-  double dt = (current_time - timestamp_).seconds();
-  // if (dt < 0.0001) {
-  //   timestamp_ = current_time;
-  //   return;
-  // }
-//   if (dt > 0.1) {
-//     RCLCPP_WARN(this->get_logger(), "Large dt detected: %.3f s, resetting", dt);
-//     timestamp_ = current_time;
-//     for (size_t i = 0; i < 3 && i < msg->data.size(); ++i) {
-//         last_ticks_[i] = msg->data[i];
-//     }
-//     return;
-//   }
+    rclcpp::Time current_time = this->now();
+    double dt = (current_time - last_time_).seconds();
+    if (dt < 0.0001) {
+        last_time_ = current_time;
+        return;
+    }
+    if (dt > 0.1) {
+        RCLCPP_WARN(this->get_logger(), "Large dt: %.3f, resetting", dt);
+        last_time_ = current_time;
+        for (size_t i = 0; i < 3; ++i) last_ticks_[i] = msg->data[i];
+        return;
+    }
 
-//     std::vector<int32_t> delta_ticks(3);
-//     for (size_t i = 0; i < 3; ++i) {
-//         delta_ticks[i] = msg->data[i] - last_ticks_[i];
-//         last_ticks_[i] = msg->data[i];
-//     }
-    
-//     for (size_t i = 0; i < 3; ++i) {
-//         double revs = static_cast<double>(delta_ticks[i]) / params_.ticks_per_rev;
-//         double wheel_distance = revs * 2.0 * M_PI * params_.wheel_radius;
-//         wheel_velocities_[i] = wheel_distance / dt;
-//     }
+    std::vector<int32_t> delta_ticks(3);
+    for (size_t i = 0; i < 3; ++i) {
+        delta_ticks[i] = msg->data[i] - last_ticks_[i];
+        last_ticks_[i] = msg->data[i];
+    }
 
-//     vx_ = (2.0 * wheel_velocities_[0] - wheel_velocities_[1] - wheel_velocities_[2]) / 3.0;
-//     vy_ = (wheel_velocities_[1] - wheel_velocities_[2]) / std::sqrt(3.0);
-//     vtheta_ = (wheel_velocities_[0] + wheel_velocities_[1] + wheel_velocities_[2]) / (3.0 * params_.robot_radius);
+    std::vector<double> w(3);
+    for (size_t i = 0; i < 3; ++i) {
+        double revs = static_cast<double>(delta_ticks[i]) / ticks_per_rev_;
+        w[i] = revs * 2.0 * M_PI / dt;
+    }
 
-//     vx_filter_.push_back(vx_);
-//     vy_filter_.push_back(vy_);
-//     vtheta_filter_.push_back(vtheta_);
-    
-//     while (vx_filter_.size() > FILTER_WINDOW) vx_filter_.pop_front();
-//     while (vy_filter_.size() > FILTER_WINDOW) vy_filter_.pop_front();
-//     while (vtheta_filter_.size() > FILTER_WINDOW) vtheta_filter_.pop_front();
-    
-//     double vx_filt = filter_average(vx_filter_);
-//     double vy_filt = filter_average(vy_filter_);
-//     double vtheta_filt = filter_average(vtheta_filter_);
+    double vx = (wheel_radius_ / 1.732) * (w[2] - w[1]);
+    double vy = (wheel_radius_ / 3.0) * (2.0 * w[0] - w[1] - w[2]);
+    double vtheta = -(wheel_radius_ / (3.0 * robot_radius_)) * (w[0] + w[1] + w[2]);
 
-//     if (std::abs(vtheta_filt) > 1e-6) {
-//         double delta_theta = vtheta_filt * dt;
-//         double R_theta = vtheta_filt;
-//         double V_robot = std::hypot(vx_filt, vy_filt);
-//         double angle_robot = std::atan2(vy_filt, vx_filt);
-        
-//         double radius = V_robot / std::abs(R_theta);
-//         double delta_x = radius * (std::sin(theta_ + delta_theta) - std::sin(theta_));
-//         double delta_y = -radius * (std::cos(theta_ + delta_theta) - std::cos(theta_));
-        
-//         x_ += delta_x;
-//         y_ += delta_y;
-//         theta_ += delta_theta;
-//     } else {
-//         x_ += (vx_filt * std::cos(theta_) - vy_filt * std::sin(theta_)) * dt;
-//         y_ += (vx_filt * std::sin(theta_) + vy_filt * std::cos(theta_)) * dt;
-//     }
-    
-//     while (theta_ > M_PI) theta_ -= 2.0 * M_PI;
-//     while (theta_ < -M_PI) theta_ += 2.0 * M_PI;
-    
-//     last_time_ = current_time;
+    // Фильтрация
+    vx_filter_.push_back(vx);
+    vy_filter_.push_back(vy);
+    vtheta_filter_.push_back(vtheta);
+    while (vx_filter_.size() > FILTER_WINDOW) vx_filter_.pop_front();
+    while (vy_filter_.size() > FILTER_WINDOW) vy_filter_.pop_front();
+    while (vtheta_filter_.size() > FILTER_WINDOW) vtheta_filter_.pop_front();
 
-    publish_odom();
+    double vx_filt = filter_average(vx_filter_);
+    double vy_filt = filter_average(vy_filter_);
+    double vtheta_filt = filter_average(vtheta_filter_);
+
+    // Сохраняем в члены класса для публикации
+    linear_x_vel_ = vx_filt;
+    linear_y_vel_ = vy_filt;
+    angular_vel_ = vtheta_filt;
+
+    // Интеграция
+    if (std::abs(vtheta_filt) > 1e-6) {
+        double delta_theta = vtheta_filt * dt;
+        double radius = std::hypot(vx_filt, vy_filt) / std::abs(vtheta_filt);
+        double heading_old = heading_;
+        heading_ += delta_theta;
+        double delta_x = radius * (std::sin(heading_) - std::sin(heading_old));
+        double delta_y = -radius * (std::cos(heading_) - std::cos(heading_old));
+        x_ += delta_x;
+        y_ += delta_y;
+    } else {
+        x_ += (vx_filt * std::cos(heading_) - vy_filt * std::sin(heading_)) * dt;
+        y_ += (vx_filt * std::sin(heading_) + vy_filt * std::cos(heading_)) * dt;
+        heading_ += vtheta_filt * dt;
+    }
+
+    // Нормализация угла
+    while (heading_ > M_PI) heading_ -= 2.0 * M_PI;
+    while (heading_ < -M_PI) heading_ += 2.0 * M_PI;
+
+    last_time_ = current_time;
 }
 
-// double OdometryNode::filter_average(const std::deque<double>& window)
-// {
-//     if (window.empty()) return 0.0;
-//     double sum = std::accumulate(window.begin(), window.end(), 0.0);
-//     return sum / window.size();
-// }
+double OdometryNode::filter_average(const std::deque<double>& window)
+{
+    if (window.empty()) return 0.0;
+    double sum = std::accumulate(window.begin(), window.end(), 0.0);
+    return sum / window.size();
+}
 
 void OdometryNode::publish_odom()
 {
