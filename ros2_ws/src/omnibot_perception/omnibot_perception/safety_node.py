@@ -17,8 +17,8 @@ class SimpleSafetyStopNode(Node):
         super().__init__('simple_safety_stop_node')
         
         # === параметры ===
-        self.declare_parameter('danger_distance', 0.1)    # опасная дистанция (метры)
-        self.declare_parameter('warning_distance', 0.3)   # дистанция предупреждения
+        self.declare_parameter('danger_distance', 0.5)    # опасная дистанция (метры)
+        self.declare_parameter('warning_distance', 0.7)   # дистанция предупреждения
         self.declare_parameter('safety_angle', 30.0)      # угол обзора (градусы)
         self.declare_parameter('enable_logging', True)
         
@@ -31,7 +31,9 @@ class SimpleSafetyStopNode(Node):
             (math.radians(135), math.radians(225)),  # фильтр для передней левой стойки
             (math.radians(45), math.radians(135)),   # фильтр для передней правой стойки
         ]
+        self.safe_angle_rad = math.radians(self.get_parameter('safety_angle').value)
         self.min_filter_distance = 0.05  # минимальное расстояние для фильтрации (метры)
+        
         # === данные ===
         self.latest_scan = None
         self.latest_cmd_vel = None
@@ -117,10 +119,11 @@ class SimpleSafetyStopNode(Node):
             # нормализуем разницу (угол не может быть больше π)
             if angle_diff > math.pi:
                 angle_diff = 2 * math.pi - angle_diff
-            
-            if distance < min_distance:
-                min_distance = distance
-        
+
+            if angle_diff <= self.safe_angle_rad:
+                # точка в зоне безопасности, проверяем расстояние
+                if distance < min_distance:
+                    min_distance = distance
         if min_distance == float('inf'):
             return None
         
