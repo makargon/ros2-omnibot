@@ -74,8 +74,8 @@ EncoderNode::EncoderNode()
     this->declare_parameter("encoder1.pin_b", 9);
     this->declare_parameter("encoder1.cpr", 390);
 
-    this->declare_parameter("encoder2.pin_a", 13);
-    this->declare_parameter("encoder2.pin_b", 19);
+    this->declare_parameter("encoder2.pin_a", 19);
+    this->declare_parameter("encoder2.pin_b", 13);
     this->declare_parameter("encoder2.cpr", 390);
 
     this->declare_parameter("encoder3.pin_a", 20);
