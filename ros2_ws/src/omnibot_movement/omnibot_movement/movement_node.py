@@ -6,9 +6,14 @@ import termios
 import tty
 import rclpy
 from rclpy.node import Node
-from geometry_msgs.msg import Twist, Point
+from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
-from tf_transformations import euler_from_quaternion
+
+def quaternion_to_yaw(q):
+    # yaw = atan2(2*(qy*qz + qw*qx), qw^2 - qx^2 - qy^2 + qz^2)
+    siny_cosp = 2.0 * (q.w * q.z + q.x * q.y)
+    cosy_cosp = 1.0 - 2.0 * (q.y * q.y + q.z * q.z)
+    return math.atan2(siny_cosp, cosy_cosp)
 
 class GoalController(Node):
     def __init__(self):
@@ -62,8 +67,7 @@ class GoalController(Node):
     def odom_callback(self, msg: Odometry):
         self.current_x = msg.pose.pose.position.x
         self.current_y = msg.pose.pose.position.y
-        q = msg.pose.pose.orientation
-        _, _, self.current_yaw = euler_from_quaternion([q.x, q.y, q.z, q.w])
+        self.current_yaw = quaternion_to_yaw(msg.pose.pose.orientation)
         self.odom_received = True
 
     def normalize_angle(self, angle: float) -> float:
