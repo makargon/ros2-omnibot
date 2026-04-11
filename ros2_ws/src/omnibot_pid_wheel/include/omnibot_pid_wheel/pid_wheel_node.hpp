@@ -8,7 +8,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/float32_multi_array.hpp"
-#include "std_msgs/msg/int32_multi_array.hpp"   // добавлено для энкодеров
+#include "std_msgs/msg/int32_multi_array.hpp"
 
 #include "omnibot_pid_wheel/pid_controller.hpp"
 
@@ -20,14 +20,11 @@ public:
 private:
     static constexpr size_t NUM_WHEELS = 3;
 
-    // PID-контроллеры для каждого колеса
     std::vector<PIDController> pid_controllers_;
 
-    // Целевые и измеренные скорости (м/с)
     std::vector<float> setpoint_;
     std::vector<float> measurement_;
 
-    // Флаги получения данных
     bool setpoint_received_;
     bool measurement_received_;
 
@@ -40,6 +37,7 @@ private:
     rclcpp::Subscription<std_msgs::msg::Float32MultiArray>::SharedPtr cmd_sub_;
     rclcpp::Subscription<std_msgs::msg::Int32MultiArray>::SharedPtr encoder_sub_;
     rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr motor_pub_;
+    rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr logger;
     rclcpp::TimerBase::SharedPtr timer_;
 
     void cmd_callback(const std_msgs::msg::Float32MultiArray::SharedPtr msg);

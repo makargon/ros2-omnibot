@@ -68,10 +68,6 @@ void PIDWheelNode::timer_callback()
             RCLCPP_WARN(this->get_logger(), "Waiting for encoder data...");
         return;
     }
-    
-    // if (std::all_of(measurement_, measurement_ + NUM_WHEELS, [](double v) { return v == 0.0; })) {
-    //     return;
-    // }
 
     static rclcpp::Time last_call = this->now();
     auto now = this->now();
@@ -81,7 +77,9 @@ void PIDWheelNode::timer_callback()
     if (dt > 0.1) dt = 0.01;
 
     std_msgs::msg::Float32MultiArray motor_msg;
+    std_msgs::msg::Float32MultiArray logger_msg;
     motor_msg.data.resize(NUM_WHEELS);
+    logger_msg.data.resize(2*NUM_WHEELS);
 
     for (size_t i = 0; i < NUM_WHEELS; ++i) {
         pid_controllers_[i].T = dt;
@@ -89,6 +87,8 @@ void PIDWheelNode::timer_callback()
             &pid_controllers_[i],
             setpoint_[i],
             measurement_[i]);
+        logger_msg.data[i] = setpoint_[i];
+        logger_msg.data[3 + i] = measurement_[i];
     }
 
     motor_pub_->publish(motor_msg);

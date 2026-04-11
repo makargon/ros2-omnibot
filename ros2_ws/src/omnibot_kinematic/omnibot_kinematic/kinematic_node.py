@@ -41,9 +41,9 @@ class KinematicNode(Node):
         sqrt3 = math.sqrt(3.0)
         coef = 2 * math.pi
 
-        w1 = coef * (vy - l * wz) / r
+        w3 = coef * (vy - l * wz) / r
         w2 = coef * (- (sqrt3 / 2) * vx - 0.5 * vy - l * wz ) / r
-        w3 = coef * ((sqrt3 / 2) * vx - 0.5 * vy - l * wz) / r
+        w1 = coef * ((sqrt3 / 2) * vx - 0.5 * vy - l * wz) / r
 
         wheel_msg = Float32MultiArray()
         wheel_msg.data = [w1, w2, w3]

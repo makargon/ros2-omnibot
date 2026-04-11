@@ -5,8 +5,7 @@
 
 OdometryNode::OdometryNode()
     : Node("odometry_node"),
-    timestamp_(this->now()),
-    last_time_ (timestamp_),
+    last_time_ (this->now()),
     x_(0.0),
     y_(0.0),
     heading_(0.0),
