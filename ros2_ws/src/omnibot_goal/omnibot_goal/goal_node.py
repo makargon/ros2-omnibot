@@ -31,21 +31,30 @@ class GoalController(Node):
         self.goal_tolerance = self.get_parameter('goal_tolerance').value
         self.angle_tolerance = self.get_parameter('angle_tolerance').value
 
-        # Маршрут: список точек (x, y, yaw) – yaw = None означает сохранять текущий угол
-        self.waypoints = [
-            (1.0, 0.0, None),
-            (0.0, 0.0, None),
-            (0.0, 1.0, None),
-            (1.0, 1.0, None)
-        ]
+        self.declare_parameter('mission', 1)
+        mission = self.get_parameter('mission').value
+
+        if mission == 1:
+            self.waypoints = [
+                (1.0, 0.0, None),   # правая нижняя
+                (0.0, 0.0, None),   # центр
+                (0.0, 1.0, None),   # левая верхняя
+                (1.0, 1.0, None)    # правая верхняя
+            ]
+        else:  # mission == 2
+            self.waypoints = [
+                (-1.0, 0.0, None),  # левая нижняя (симметрично)
+                (0.0, 0.0, None),
+                (0.0, 1.0, None),
+                (-1.0, 1.0, None)
+            ]
+
         self.current_waypoint_idx = 0
 
-        # Текущая цель
         self.goal_x = 0.0
         self.goal_y = 0.0
         self.goal_yaw = 0.0
 
-        # Текущая позиция
         self.current_x = 0.0
         self.current_y = 0.0
         self.current_yaw = 0.0
