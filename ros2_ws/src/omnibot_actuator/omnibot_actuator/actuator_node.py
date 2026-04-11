@@ -110,7 +110,6 @@ class ActuatorNode(Node):
             msg = Bool()
             msg.data = True
             self.start_pub.publish(msg)
-            self.servos[2].angle = 60
             self.timer.cancel()
 
     def motor_callback(self, msg: Float32MultiArray) -> None:
