@@ -36,17 +36,17 @@ class GoalController(Node):
 
         if mission == 1:
             self.waypoints = [
-                (0.2, 0.0, None),   # правая нижняя
+                (0.01, 0.0, None),   # правая нижняя
                 (0.0, 0.0, None),   # центр
-                (0.0, 0.2, None),   # левая верхняя
-                (0.2, 0.2, None)    # правая верхняя
+                (0.0, 0.01, None),   # левая верхняя
+                (0.01, 0.01, None)    # правая верхняя
             ]
         else:  # mission == 2
             self.waypoints = [
-                (-0.2, 0.0, None),  # левая нижняя (симметрично)
+                (-0.01, 0.0, None),  # левая нижняя (симметрично)
                 (0.0, 0.0, None),
-                (0.0, 0.2, None),
-                (-0.2, 0.2, None)
+                (0.0, 0.01, None),
+                (-0.01, 0.01, None)
             ]
 
         self.current_waypoint_idx = 0
@@ -62,7 +62,7 @@ class GoalController(Node):
 
         # Подписка на одометрию
         self.odom_sub = self.create_subscription(Odometry, '/odom', self.odom_callback, 10)
-        self.start_sub = self.create_subscription(Bool, '/start', self.odom_callback, 10)
+        # self.start_sub = self.create_subscription(Bool, '/start', self.odom_callback, 10)
 
         # Публикация команд скорости
         self.cmd_pub = self.create_publisher(Twist, '/cmd_vel', 10)
@@ -139,7 +139,7 @@ class GoalController(Node):
         angle_to_goal = math.atan2(dy, dx)
         angle_error = self.normalize_angle(angle_to_goal - self.current_yaw)
 
-        if abs(angle_error) > 0.2:
+        if abs(angle_error) > 0.01:
             vx = 0.0
             vy = 0.0
             wz = self.kp_angular * angle_error
