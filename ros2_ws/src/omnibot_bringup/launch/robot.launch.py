@@ -37,7 +37,7 @@ def generate_launch_description() -> LaunchDescription:
         DeclareLaunchArgument('robot_calibration_yaml', default_value=''),
 
         _include('omnibot_actuator', 'actuator.launch.py', IfCondition(with_control)),
-        _include('omnibot_encoder', 'encoder.launch.py', IfCondition(with_control)),
+        # _include('omnibot_encoder', 'encoder.launch.py', IfCondition(with_control)),
         _include('omnibot_encoder', 'odometry.launch.py', IfCondition(with_control)),
         _include('omnibot_kinematic', 'kinematic.launch.py', IfCondition(with_control)),
 

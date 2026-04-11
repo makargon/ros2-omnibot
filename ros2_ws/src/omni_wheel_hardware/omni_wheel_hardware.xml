@@ -1,9 +1,0 @@
-<library path="omni_wheel_hardware">
-  <class name="omni_wheel_hardware/OmniWheelHardware"
-         type="omni_wheel_hardware::OmniWheelHardware"
-         base_class_type="hardware_interface::SystemInterface">
-    <description>
-      Hardware interface for omni-wheel robot using /motor_speeds and /encoder_ticks topics.
-    </description>
-  </class>
-</library>

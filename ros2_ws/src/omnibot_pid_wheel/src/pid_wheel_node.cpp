@@ -10,15 +10,15 @@ PIDWheelNode::PIDWheelNode() : Node("pid_wheel_node"),
     pid_controllers_.resize(NUM_WHEELS);
     for (auto &pid : pid_controllers_) {
         PIDController_Init(&pid);
-        pid.Kp = 1.0f;
-        pid.Ki = 0.1f;
+        pid.Kp = 3.0f;
+        pid.Ki = 0.2f;
         pid.Kd = 0.01f;
         pid.tau = 0.05f;
-        pid.limMin = -100.0f;
-        pid.limMax = 100.0f;
-        pid.limMinInt = -50.0f;
-        pid.limMaxInt = 50.0f;
-        pid.T = 0.05f;
+        pid.limMin = -40.0f;
+        pid.limMax = 40.0f;
+        pid.limMinInt = -10.0f;
+        pid.limMaxInt = 10.0f;
+        pid.T = 0.0001f;
     }
     
     this->declare_parameter("wheel_radius", 0.05);
@@ -37,11 +37,14 @@ PIDWheelNode::PIDWheelNode() : Node("pid_wheel_node"),
         "/encoder_ticks", 10,
         std::bind(&PIDWheelNode::encoder_callback, this, std::placeholders::_1));
 
+    logger_ = this->create_publisher<std_msgs::msg::Float32MultiArray>(
+        "/pid_logger", 10);
+
     motor_pub_ = this->create_publisher<std_msgs::msg::Float32MultiArray>(
         "/motor_speeds", 10);
 
     timer_ = this->create_wall_timer(
-        std::chrono::milliseconds(10),
+        std::chrono::milliseconds(5),
         std::bind(&PIDWheelNode::timer_callback, this));
 }
 
@@ -63,7 +66,6 @@ void PIDWheelNode::cmd_callback(const std_msgs::msg::Float32MultiArray::SharedPt
 void PIDWheelNode::timer_callback()
 {
     if (!measurement_received_) {
-        // Нет данных с энкодеров – не отправляем команды
         static int warn_count = 0;
         if (warn_count++ % 100 == 0)
             RCLCPP_WARN(this->get_logger(), "Waiting for encoder data...");
@@ -78,18 +80,26 @@ void PIDWheelNode::timer_callback()
     if (dt > 0.1) dt = 0.01;
 
     std_msgs::msg::Float32MultiArray motor_msg;
+    std_msgs::msg::Float32MultiArray logger_msg;
     motor_msg.data.resize(NUM_WHEELS);
+    logger_msg.data.resize(2*NUM_WHEELS);
 
     for (size_t i = 0; i < NUM_WHEELS; ++i) {
         pid_controllers_[i].T = dt;
-        motor_msg.data[i] = setpoint_[i];
-        
-        // PIDController_Update(
-        //     &pid_controllers_[i],
-        //     setpoint_[i],
-        //     measurement_[i]);
+        float error = setpoint_[i] - measurement_[i];
+        if (fabs(error) < 0.01f && fabs(setpoint_[i]) < 0.01f) {
+            pid_controllers_[i].integrator = 0.0f;
+        }
+
+        motor_msg.data[i] = PIDController_Update(
+            &pid_controllers_[i],
+            setpoint_[i],
+            measurement_[i]);
+        logger_msg.data[i] = setpoint_[i];
+        logger_msg.data[3 + i] = measurement_[i];
     }
 
+    logger_->publish(logger_msg);
     motor_pub_->publish(motor_msg);
 }
 
@@ -124,20 +134,9 @@ void PIDWheelNode::encoder_callback(const std_msgs::msg::Int32MultiArray::Shared
 
     for (size_t i = 0; i < NUM_WHEELS; ++i) {
         double revs = static_cast<double>(delta_ticks[i]) / ticks_per_rev_;
-        double distance = revs * 2.0 * M_PI * wheel_radius_;
-        double speed = distance / dt;
-        measurement_[i] = static_cast<float>(speed);
+        double angular_speed = revs * 2.0 * M_PI / dt;
+        measurement_[i] = static_cast<float>(angular_speed);
     }
-
-    // Если хотите публиковать измеренные скорости для других узлов
-    // (например, для odometry_node), раскомментируйте:
-    /*
-    std_msgs::msg::Float32MultiArray speed_msg;
-    speed_msg.data.resize(NUM_WHEELS);
-    std::copy(measurement_.begin(), measurement_.end(), speed_msg.data.begin());
-    // Предварительно нужно создать publisher_ (например, wheel_speeds_pub_)
-    // wheel_speeds_pub_->publish(speed_msg);
-    */
 
     last_time_ = current_time;
     measurement_received_ = true;

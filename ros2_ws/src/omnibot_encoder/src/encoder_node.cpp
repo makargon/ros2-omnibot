@@ -70,16 +70,16 @@ EncoderNode::EncoderNode()
         throw std::runtime_error("Cannot open GPIO chip");
     }
 
-    this->declare_parameter("encoder1.pin_a", 10);
-    this->declare_parameter("encoder1.pin_b", 9);
+    this->declare_parameter("encoder1.pin_a", 21);
+    this->declare_parameter("encoder1.pin_b", 20);
     this->declare_parameter("encoder1.cpr", 390);
 
-    this->declare_parameter("encoder2.pin_a", 13);
-    this->declare_parameter("encoder2.pin_b", 19);
+    this->declare_parameter("encoder2.pin_a", 19);
+    this->declare_parameter("encoder2.pin_b", 13);
     this->declare_parameter("encoder2.cpr", 390);
 
-    this->declare_parameter("encoder3.pin_a", 20);
-    this->declare_parameter("encoder3.pin_b", 21);
+    this->declare_parameter("encoder3.pin_a", 9);
+    this->declare_parameter("encoder3.pin_b", 10);
     this->declare_parameter("encoder3.cpr", 390);
 
     int e1a = this->get_parameter("encoder1.pin_a").as_int();
@@ -99,9 +99,10 @@ EncoderNode::EncoderNode()
     encoders_.push_back(std::make_unique<RotaryEncoder>(gpio_handle_, e3a, e3b, e3cpr));
 
     publisher_ = this->create_publisher<std_msgs::msg::Int32MultiArray>("/encoder_ticks", 10);
-    timer_ = this->create_wall_timer(20ms, std::bind(&EncoderNode::timer_callback, this));
+    // publisher_speed_ = this->create_publisher<std_msgs::msg::Float32MultiArray>("/wheel_speeds", 10);
+    timer_ = this->create_wall_timer(5ms, std::bind(&EncoderNode::timer_callback, this));
 
-    RCLCPP_INFO(this->get_logger(), "Encoder node started. Publishing to /encoder_ticks");
+    RCLCPP_INFO(this->get_logger(), "Encoder node started. Publishing to /encoder_ticks and /wheel_speeds");
 }
 
 EncoderNode::~EncoderNode() {
@@ -116,6 +117,7 @@ void EncoderNode::timer_callback() {
     for (size_t i = 0; i < encoders_.size(); ++i) {
         msg.data[i] = static_cast<int32_t>(encoders_[i]->count());
     }
+
     publisher_->publish(msg);
 }
 

@@ -1,6 +1,9 @@
 #ifndef OMNIBOT_ENCODER_ODOMETRY_NODE_HPP
 #define OMNIBOT_ENCODER_ODOMETRY_NODE_HPP
 
+#include <Eigen/Dense>
+#include <vector>
+
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/int32_multi_array.hpp"
 #include "nav_msgs/msg/odometry.hpp"
@@ -10,41 +13,60 @@
 
 #include <deque>
 #include <memory>
-#include <vector>
 
 class OdometryNode : public rclcpp::Node
 {
 public:
     OdometryNode();
 
+    double getX() const { return x_; }
+    double getY() const { return y_; }
+    double getHeading() const { return heading_; }
+    double getLinearXVel() const { return linear_x_vel_; }
+    double getLinearYVel() const { return linear_y_vel_; }
+    double getAngularVel() const { return angular_vel_; }
+
 private:
     void encoder_callback(const std_msgs::msg::Int32MultiArray::SharedPtr msg);
-    void compute_odometry();
+    double filter_average(const std::deque<double>& window);
     void publish_odom();
-    void wheel_velocities_from_ticks(const std::vector<int32_t>& current_ticks);
     
-    struct RobotParams {
-        double wheel_radius;    
-        double robot_radius;
-        double ticks_per_rev;
-    } params_;
-
-    std::vector<int32_t> last_ticks_;
+    // Current timestamp:
     rclcpp::Time last_time_;
-    std::vector<double> wheel_velocities_;
 
-    double x_, y_, theta_;
-    double vx_, vy_, vtheta_;
+    // Current pose:
+    double x_;        // [m]
+    double y_;        // [m]
+    double heading_;  // [rads]
+    
+    // Current velocity:
+    double linear_x_vel_;  // [m/s]
+    double linear_y_vel_;  // [m/s]
+    double angular_vel_;   // [rads/s]
 
-    std::deque<double> vx_filter_, vy_filter_, vtheta_filter_;
-    static constexpr size_t FILTER_WINDOW = 5;
+    // Robot kinematic parameters:
+    double robot_radius_;  // [m]
+    double wheel_radius_;  // [m]
+        
+    double vx_;
+    double vy_;
+    double vtheta_;
+
+    std::deque<double> vx_filter_;
+    std::deque<double> vy_filter_;
+    std::deque<double> vtheta_filter_;
+    const size_t FILTER_WINDOW = 10;
+
+    // Previous wheel positions/states [rads]:
+    std::vector<double> wheels_old_pos_;
+
+    double ticks_per_rev_;
+    std::vector<int32_t> last_ticks_;
     
     rclcpp::Subscription<std_msgs::msg::Int32MultiArray>::SharedPtr encoder_sub_;
     rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
     std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
     rclcpp::TimerBase::SharedPtr odom_timer_;
-    
-    double filter_average(const std::deque<double>& window);
 };
 
 #endif

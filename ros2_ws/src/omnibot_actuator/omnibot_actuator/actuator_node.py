@@ -19,23 +19,22 @@ class MotorControl:
     pca: PCA9685
     chip: Any
 
-    def set_dir(self, dir: bool) -> None:
-        if dir:
+    def set_dir(self, dir: float) -> None:
+        if dir > 0:
             lgpio.gpio_write(self.chip, self.pin_a, 1)
             lgpio.gpio_write(self.chip, self.pin_b, 0)
-        else:
+        elif  dir < 0:
             lgpio.gpio_write(self.chip, self.pin_b, 1)
             lgpio.gpio_write(self.chip, self.pin_a, 0)
+        else:
+            lgpio.gpio_write(self.chip, self.pin_b, 1)
+            lgpio.gpio_write(self.chip, self.pin_a, 1)
 
-    def set_speed(self, speed: float) -> None: # speed приходит в м/с
-        # макс скорость двигателей = 1.8 м/c
-        speed /= 1.8
-        
-        if speed < 0.0:
-            speed = 0.0
-        elif speed > 1.0:
-            speed = 1.0
-        duty = int(speed * 65535)
+    def set_speed(self, speed: float) -> None: # speed приходит в рад/с
+        # макс скорость двигателей = 1.8 м/c => * r => рад/с
+        max_angular_speed = 1.8 / 0.05
+        norm = max(0.0, min(1.0, speed / max_angular_speed))
+        duty = int(norm * 65535)
         self.pca.channels[self.pwm_channel].duty_cycle = duty
 
 
@@ -69,15 +68,15 @@ class ActuatorNode(Node):
         lgpio.gpio_claim_output(self.chip, 27)
         
         self.motors = [
-            MotorControl(pwm_channel=0, pin_a=5, pin_b=6, pca=self.pca, chip=self.chip),
-            MotorControl(pwm_channel=1, pin_a=17, pin_b=22, pca=self.pca, chip=self.chip),
             MotorControl(pwm_channel=2, pin_a=26, pin_b=27, pca=self.pca, chip=self.chip),
+            MotorControl(pwm_channel=1, pin_a=17, pin_b=22, pca=self.pca, chip=self.chip),
+            MotorControl(pwm_channel=0, pin_a=5, pin_b=6, pca=self.pca, chip=self.chip),
         ]
 
         self.servos = [
             servo.Servo(pwm_out=self.pca.channels[4], actuation_range=160), # grab
             servo.Servo(pwm_out=self.pca.channels[5], actuation_range=160),
-            servo.Servo(pwm_out=self.pca.channels[6], actuation_range=160) # hand
+            servo.Servo(pwm_out=self.pca.channels[6], actuation_range=120) # hand
         ]
 
         self.sub_motors = self.create_subscription(
@@ -94,14 +93,22 @@ class ActuatorNode(Node):
             10
         )
 
+        self.servos[2].angle = 100
+
     def motor_callback(self, msg: Float32MultiArray) -> None:
         for motor, speed in zip(self.motors, msg.data):
-            motor.set_dir(speed > 0)
+            motor.set_dir(speed)
             motor.set_speed(abs(speed))
 
+    # TODO Для серв необходима калибровка - непонятно в каком положении сейчас находится -> нет смысла ставить ограничения
     def servo_callback(self, msg: Int32MultiArray) -> None:
+        # i: int = 4
         for serv, angle in zip(self.servos, msg.data):
-            serv.angle = angle
+            # if i == 4 and angle > 30:
+                serv.angle = angle
+            # if i == 6 and angle > 64:
+                # serv.angle = angle
+            # i += 1
 
     def destroy_node(self) -> bool:
         for motor in self.motors:
