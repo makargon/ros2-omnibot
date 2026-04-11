@@ -111,8 +111,8 @@ class GoalController(Node):
         self.get_logger().info("Robot stopped and controller disabled.")
 
     def control_loop(self):
-        if not self.odom_received:
-            return
+        # if not self.odom_received:
+        #     return
 
         dx = self.goal_x - self.current_x
         dy = self.goal_y - self.current_y
