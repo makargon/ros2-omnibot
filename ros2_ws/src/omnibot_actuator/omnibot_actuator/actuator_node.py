@@ -100,7 +100,7 @@ class ActuatorNode(Node):
         self.start_pub = self.create_publisher(Bool, '/start', 10)
         self.timer = self.create_timer(1.0 / 10, self.check_reed_switch)
 
-        self.servos[2].angle = 100
+        self.servos[2].angle = 80
 
     
     def check_reed_switch(self):
