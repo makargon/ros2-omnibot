@@ -14,10 +14,10 @@ PIDWheelNode::PIDWheelNode() : Node("pid_wheel_node"),
         pid.Ki = 0.1f;
         pid.Kd = 0.01f;
         pid.tau = 0.05f;
-        pid.limMin = -1 * 1.8 * 0.05;
-        pid.limMax = 1.8 * 0.05;
-        pid.limMinInt = -0.01;
-        pid.limMaxInt = 0.01;
+        pid.limMin = -36f;
+        pid.limMax = 36f;
+        pid.limMinInt = -10.0f;
+        pid.limMaxInt = 10.0f;
         pid.T = 0.0001f;
     }
     
@@ -86,10 +86,10 @@ void PIDWheelNode::timer_callback()
 
     for (size_t i = 0; i < NUM_WHEELS; ++i) {
         pid_controllers_[i].T = dt;
-        motor_msg.data[i] = setpoint_[i]; // == 0 ? 0 : PIDController_Update(
-            // &pid_controllers_[i],
-            // setpoint_[i],
-            // measurement_[i]);
+        motor_msg.data[i] = setpoint_[i] == 0 ? 0 : PIDController_Update(
+            &pid_controllers_[i],
+            setpoint_[i],
+            measurement_[i]);
         logger_msg.data[i] = setpoint_[i];
         logger_msg.data[3 + i] = measurement_[i];
     }
@@ -129,9 +129,8 @@ void PIDWheelNode::encoder_callback(const std_msgs::msg::Int32MultiArray::Shared
 
     for (size_t i = 0; i < NUM_WHEELS; ++i) {
         double revs = static_cast<double>(delta_ticks[i]) / ticks_per_rev_;
-        double distance = revs * 2.0 * M_PI * wheel_radius_;
-        double speed = distance / dt;
-        measurement_[i] = static_cast<float>(speed);
+        double angular_speed = revs * 2.0 * M_PI / dt;
+        measurement_[i] = static_cast<float>(angular_speed);
     }
 
     last_time_ = current_time;
