@@ -6,15 +6,15 @@ import os
 
 
 def generate_launch_description() -> LaunchDescription:
-    # pkg_share = get_package_share_directory('omnibot_movement')
-    # params_file = os.path.join(pkg_share, 'config', 'movement.yaml')
+    # pkg_share = get_package_share_directory('omnibot_goal')
+    # params_file = os.path.join(pkg_share, 'config', 'goal.yaml')
 
-    movement_node = Node(
-        package='omnibot_movement',
+    goal_node = Node(
+        package='omnibot_goal',
         executable='run',
-        name='movement_node',
+        name='goal_node',
         output='screen',
         # parameters=[ParameterFile(params_file, allow_substs=True)],
     )
 
-    return LaunchDescription([movement_node])
+    return LaunchDescription([goal_node])
