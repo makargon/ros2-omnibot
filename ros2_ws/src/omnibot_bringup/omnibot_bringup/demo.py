@@ -7,6 +7,7 @@ class DemoNode(Node):
     def __init__(self):
         super().__init__('demo_node')
         self.publisher = self.create_publisher(Twist, 'cmd_vel', 10)
+        loop_rate = 10  # Hz
         self._loop_rate = self.create_rate(loop_rate, self.get_clock())
         self.timer = self.create_timer(4.0, self.timer_callback)
         self.get_logger().info('Demo node started')
