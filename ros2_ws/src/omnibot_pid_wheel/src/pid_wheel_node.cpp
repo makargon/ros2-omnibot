@@ -10,8 +10,8 @@ PIDWheelNode::PIDWheelNode() : Node("pid_wheel_node"),
     pid_controllers_.resize(NUM_WHEELS);
     for (auto &pid : pid_controllers_) {
         PIDController_Init(&pid);
-        pid.Kp = 4.0f;
-        pid.Ki = 0.1f;
+        pid.Kp = 3.0f;
+        pid.Ki = 0.2f;
         pid.Kd = 0.01f;
         pid.tau = 0.05f;
         pid.limMin = -40.0f;
