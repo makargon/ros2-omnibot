@@ -14,8 +14,8 @@ PIDWheelNode::PIDWheelNode() : Node("pid_wheel_node"),
         pid.Ki = 0.1f;
         pid.Kd = 0.01f;
         pid.tau = 0.05f;
-        pid.limMin = -36f;
-        pid.limMax = 36f;
+        pid.limMin = -36.0f;
+        pid.limMax = 36.0f;
         pid.limMinInt = -10.0f;
         pid.limMaxInt = 10.0f;
         pid.T = 0.0001f;
