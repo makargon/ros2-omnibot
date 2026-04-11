@@ -32,11 +32,9 @@ class MotorControl:
 
     def set_speed(self, speed: float) -> None: # speed приходит в рад/с
         # макс скорость двигателей = 1.8 м/c => * r => рад/с
-        speed /= 1.8 * 0.05
-        
-        if speed >= 1.0:
-            speed = 1.0
-        duty = int(speed * 65535)
+        max_angular_speed = 1.8 / 0.05
+        norm = max(0.0, min(1.0, speed / max_angular_speed))
+        duty = int(norm * 65535)
         self.pca.channels[self.pwm_channel].duty_cycle = duty
 
 

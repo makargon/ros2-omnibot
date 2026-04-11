@@ -10,12 +10,12 @@ PIDWheelNode::PIDWheelNode() : Node("pid_wheel_node"),
     pid_controllers_.resize(NUM_WHEELS);
     for (auto &pid : pid_controllers_) {
         PIDController_Init(&pid);
-        pid.Kp = 1.0f;
+        pid.Kp = 5.0f;
         pid.Ki = 0.1f;
         pid.Kd = 0.01f;
         pid.tau = 0.05f;
-        pid.limMin = -36.0f;
-        pid.limMax = 36.0f;
+        pid.limMin = -40.0f;
+        pid.limMax = 40.0f;
         pid.limMinInt = -10.0f;
         pid.limMaxInt = 10.0f;
         pid.T = 0.0001f;
@@ -86,10 +86,10 @@ void PIDWheelNode::timer_callback()
 
     for (size_t i = 0; i < NUM_WHEELS; ++i) {
         pid_controllers_[i].T = dt;
-        motor_msg.data[i] = setpoint_[i]; // == 0 ? 0 : PIDController_Update(
-            // &pid_controllers_[i],
-            // setpoint_[i],
-            // measurement_[i]);
+        motor_msg.data[i] = PIDController_Update(
+            &pid_controllers_[i],
+            setpoint_[i],
+            measurement_[i]);
         logger_msg.data[i] = setpoint_[i];
         logger_msg.data[3 + i] = measurement_[i];
     }
