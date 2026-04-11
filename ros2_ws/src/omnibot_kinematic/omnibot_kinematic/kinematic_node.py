@@ -33,7 +33,7 @@ class KinematicNode(Node):
 
     def cmd_vel_callback(self, msg: Twist):
         vx = msg.linear.x
-        vy = msg.linear.y
+        vy = - msg.linear.y
         wz = msg.angular.z
 
         r = self.wheel_radius
