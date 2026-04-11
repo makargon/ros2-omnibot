@@ -6,15 +6,15 @@ import os
 
 
 def generate_launch_description() -> LaunchDescription:
-    pkg_share = get_package_share_directory('omnibot_teleop')
-    params_file = os.path.join(pkg_share, 'config', 'teleop.yaml')
+    pkg_share = get_package_share_directory('omnibot_movement')
+    params_file = os.path.join(pkg_share, 'config', 'movement.yaml')
 
-    teleop_node = Node(
-        package='omnibot_teleop',
+    movement_node = Node(
+        package='omnibot_movement',
         executable='run',
-        name='teleop_node',
+        name='movement_node',
         output='screen',
         parameters=[ParameterFile(params_file, allow_substs=True)],
     )
 
-    return LaunchDescription([teleop_node])
+    return LaunchDescription([movement_node])
