@@ -27,8 +27,8 @@ class MotorControl:
             lgpio.gpio_write(self.chip, self.pin_b, 1)
             lgpio.gpio_write(self.chip, self.pin_a, 0)
         else:
-            lgpio.gpio_write(self.chip, self.pin_b, 0)
-            lgpio.gpio_write(self.chip, self.pin_a, 0)
+            lgpio.gpio_write(self.chip, self.pin_b, 1)
+            lgpio.gpio_write(self.chip, self.pin_a, 1)
 
     def set_speed(self, speed: float) -> None: # speed приходит в рад/с
         # макс скорость двигателей = 1.8 м/c => * r => рад/с

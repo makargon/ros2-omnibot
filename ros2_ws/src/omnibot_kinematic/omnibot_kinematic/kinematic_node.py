@@ -42,6 +42,8 @@ class KinematicNode(Node):
         coef = 2 * math.pi
 
         w1 = coef * (vy - l * wz) / r
+        # TODO
+        # Опять что-то сломалось в кинематике
         w2 = coef * (- (sqrt3 / 2) * vx - 0.5 * vy - l * wz ) / r
         w3 = coef * ((sqrt3 / 2) * vx - 0.5 * vy - l * wz) / r
 
