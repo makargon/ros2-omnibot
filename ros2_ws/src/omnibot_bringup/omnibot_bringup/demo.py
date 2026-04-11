@@ -21,7 +21,7 @@ class DemoNode(Node):
         # self.timer = self.create_timer(1.0, self.timer_callback)
         self.get_logger().info('Demo node started')
 
-    def starter_callback(self):
+    def starter_callback(self, msg: Bool):
         self.timer = self.create_timer(1.0, self.timer_callback)
 
     def timer_callback(self):
