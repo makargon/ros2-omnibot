@@ -23,9 +23,9 @@ setup(
     tests_require=['pytest'],
     entry_points={'console_scripts': [
         'robot_launch = omnibot_bringup.launch.robot_launch:generate_launch_description',
-        # 'demo = omnibot_bringup.missions.demo:main',
+        'demo = omnibot_bringup.missions.demo:main',
     ]},
     scripts=[
-        'missions/demo.py',
+        # 'missions/demo.py',
     ]
 )
