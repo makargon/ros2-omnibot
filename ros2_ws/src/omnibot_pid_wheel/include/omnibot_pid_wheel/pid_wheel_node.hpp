@@ -37,7 +37,7 @@ private:
     rclcpp::Subscription<std_msgs::msg::Float32MultiArray>::SharedPtr cmd_sub_;
     rclcpp::Subscription<std_msgs::msg::Int32MultiArray>::SharedPtr encoder_sub_;
     rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr motor_pub_;
-    rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr logger;
+    rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr logger_;
     rclcpp::TimerBase::SharedPtr timer_;
 
     void cmd_callback(const std_msgs::msg::Float32MultiArray::SharedPtr msg);
