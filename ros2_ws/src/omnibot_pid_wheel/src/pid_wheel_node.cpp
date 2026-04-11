@@ -86,6 +86,12 @@ void PIDWheelNode::timer_callback()
 
     for (size_t i = 0; i < NUM_WHEELS; ++i) {
         pid_controllers_[i].T = dt;
+        float error = setpoint_[i] - measurement_[i];
+        // Если задание нулевое и ошибка очень маленькая -> сброс интегратора
+        if (fabs(error) < 0.01f && fabs(setpoint_[i]) < 0.01f) {
+            pid_controllers_[i].integrator = 0.0f;
+        }
+        
         motor_msg.data[i] = PIDController_Update(
             &pid_controllers_[i],
             setpoint_[i],
