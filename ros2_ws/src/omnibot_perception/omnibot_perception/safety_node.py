@@ -19,7 +19,7 @@ class SimpleSafetyStopNode(Node):
         # === параметры ===
         self.declare_parameter('danger_distance', 0.4)    # опасная дистанция (метры)
         self.declare_parameter('warning_distance', 0.55)   # дистанция предупреждения
-        self.declare_parameter('safety_angle', 30.0)      # угол обзора (градусы)
+        self.declare_parameter('safety_angle', 50.0)      # угол обзора (градусы)
         self.declare_parameter('lidar_angle', 210.0)        # yaw лидара относительно base_link (градусы)
         self.declare_parameter('enable_logging', True)
         

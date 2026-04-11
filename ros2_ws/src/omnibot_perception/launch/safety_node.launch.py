@@ -31,7 +31,7 @@ def generate_launch_description():
     
     safety_angle = DeclareLaunchArgument(
         'safety_angle',
-        default_value='30.0',
+        default_value='50.0',
         description='угол обзора безопасности в градусах'
     )
     
