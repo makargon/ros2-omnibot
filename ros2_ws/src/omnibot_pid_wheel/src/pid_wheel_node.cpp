@@ -91,6 +91,7 @@ void PIDWheelNode::timer_callback()
         logger_msg.data[3 + i] = measurement_[i];
     }
 
+    logger_->publish(logger_msg);
     motor_pub_->publish(motor_msg);
 }
 
