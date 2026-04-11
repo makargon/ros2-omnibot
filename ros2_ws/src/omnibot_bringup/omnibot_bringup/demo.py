@@ -7,7 +7,7 @@ class DemoNode(Node):
     def __init__(self):
         super().__init__('demo_node')
         self.publisher = self.create_publisher(Twist, 'cmd_vel', 10)
-        loop_rate = 10  # Hz
+        loop_rate = 1  # Hz
         self._loop_rate = self.create_rate(loop_rate, self.get_clock())
         self.timer = self.create_timer(4.0, self.timer_callback)
         self.get_logger().info('Demo node started')
@@ -21,22 +21,22 @@ class DemoNode(Node):
         msg.linear.y = 0.0
         self.publisher.publish(msg)
         self.get_logger().info('Published cmd_vel: linear.x=%.2f angular.z=%.2f' % (msg.linear.x, msg.angular.z))
-        self._loop_rate.sleep(1)
+        self._loop_rate.sleep()
         msg.linear.x = 0.0
         msg.linear.y = 0.2
         self.publisher.publish(msg)
         self.get_logger().info('Published cmd_vel: linear.x=%.2f linear.y=%.2f' % (msg.linear.x, msg.linear.y))
-        self._loop_rate.sleep(1)
+        self._loop_rate.sleep()
         msg.linear.x = -0.2
         msg.linear.y = 0.0
         self.publisher.publish(msg)
         self.get_logger().info('Published cmd_vel: linear.x=%.2f angular.z=%.2f' % (msg.linear.x, msg.angular.z))
-        self._loop_rate.sleep(1)
+        self._loop_rate.sleep()
         msg.linear.x = 0.0
         msg.linear.y = -0.2
         self.publisher.publish(msg)
         self.get_logger().info('Published cmd_vel: linear.y=%.2f' % (msg.linear.y))
-        self._loop_rate.sleep(1)
+        self._loop_rate.sleep()
 
 
 def main(args=None):
