@@ -10,7 +10,7 @@ PIDWheelNode::PIDWheelNode() : Node("pid_wheel_node"),
     pid_controllers_.resize(NUM_WHEELS);
     for (auto &pid : pid_controllers_) {
         PIDController_Init(&pid);
-        pid.Kp = 5.0f;
+        pid.Kp = 4.0f;
         pid.Ki = 0.1f;
         pid.Kd = 0.01f;
         pid.tau = 0.05f;
@@ -44,7 +44,7 @@ PIDWheelNode::PIDWheelNode() : Node("pid_wheel_node"),
         "/motor_speeds", 10);
 
     timer_ = this->create_wall_timer(
-        std::chrono::milliseconds(10),
+        std::chrono::milliseconds(5),
         std::bind(&PIDWheelNode::timer_callback, this));
 }
 
