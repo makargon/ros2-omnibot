@@ -98,7 +98,7 @@ class ActuatorNode(Node):
         )
 
         self.pub_ = self.create_publisher(Bool, '/start', 10)
-        self.timer = self.create_timer(1.0 / self.publish_rate, self.check_reed_switch)
+        self.timer = self.create_timer(1.0 / 10, self.check_reed_switch)
 
         self.servos[2].angle = 100
 
