@@ -1,6 +1,7 @@
 import rclpy
 from rclpy.node import Node
-from geometry_msgs.msg import Twist, Bool
+from geometry_msgs.msg import Twist
+from std_msgs.msg import Bool
 
 class DemoNode(Node):
     def __init__(self):
