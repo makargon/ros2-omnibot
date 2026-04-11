@@ -1,13 +1,13 @@
 import rclpy
 from rclpy.node import Node
-from geometry_msgs.msg import Twist
+from geometry_msgs.msg import Twist, Bool
 
 class DemoNode(Node):
     def __init__(self):
         super().__init__('demo_node')
         self.publisher = self.create_publisher(Twist, 'cmd_vel', 10)
+        self.sub = self.create_subscription(Bool, 'start', self.starter_callback, 10)
 
-        # Шаги движения по квадрату: вперед, влево, назад, вправо
         self._steps = [
             (0.1, 0.0),
             (0.0, 0.1),
@@ -16,9 +16,12 @@ class DemoNode(Node):
         ]
         self._step_idx = 0
 
-        # Публикуем новую команду раз в секунду без блокирующего sleep внутри callback.
-        self.timer = self.create_timer(1.0, self.timer_callback)
+        # self.timer = self.create_timer(0.1, self.starter_callback)
+        # self.timer = self.create_timer(1.0, self.timer_callback)
         self.get_logger().info('Demo node started')
+
+    def starter_callback(self):
+        self.timer = self.create_timer(1.0, self.timer_callback)
 
     def timer_callback(self):
         """Бесконечно двигается по квадрату, меняя направление раз в секунду."""
