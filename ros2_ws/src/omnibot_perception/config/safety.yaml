@@ -1,0 +1,7 @@
+simple_safety_stop_node:
+  ros__parameters:
+    danger_distance: 0.4      # опасная дистанция (метры)
+    warning_distance: 0.55     # дистанция предупреждения (метры)
+    safety_angle: 30.0        # угол обзора (градусы)
+    lidar_angle: 210.0        # yaw лидара относительно base_link (градусы)
+    enable_logging: true      # включить логирование

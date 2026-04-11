@@ -18,7 +18,7 @@ class KinematicNode(Node):
 
         self.subscription = self.create_subscription(
             Twist,
-            '/cmd_vel',
+            '/cmd_vel_safe',
             self.cmd_vel_callback,
             10
         )

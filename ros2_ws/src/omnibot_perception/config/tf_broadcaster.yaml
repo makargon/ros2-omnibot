@@ -1,5 +1,5 @@
 # Transform Broadcaster Configuration
-tf_broadcaster_node:
+tf_broadcaster:
   ros__parameters:
     # Frame names
     base_frame: "base_link"
@@ -10,3 +10,4 @@ tf_broadcaster_node:
     lidar_x: 0.0
     lidar_y: 0.0
     lidar_z: 0.1    # 10 cm above base
+    lidar_angle: 210    # yaw rotation of lidar relative to base_link, in degreess

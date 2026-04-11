@@ -2,7 +2,7 @@ import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import TransformStamped
 from tf2_ros import TransformBroadcaster
-from math import pi
+from math import cos, sin, radians
 
 
 class TFBroadcasterNode(Node):
@@ -26,6 +26,7 @@ class TFBroadcasterNode(Node):
         self.declare_parameter('lidar_x', 0.0)
         self.declare_parameter('lidar_y', 0.0)
         self.declare_parameter('lidar_z', 0.1)
+        self.declare_parameter('lidar_angle', 0)
         
         self.base_frame = self.get_parameter('base_frame').value
         self.odom_frame = self.get_parameter('odom_frame').value
@@ -33,6 +34,7 @@ class TFBroadcasterNode(Node):
         self.lidar_x = self.get_parameter('lidar_x').value
         self.lidar_y = self.get_parameter('lidar_y').value
         self.lidar_z = self.get_parameter('lidar_z').value
+        self.lidar_angle = self.get_parameter('lidar_angle').value
         
         # Create timer to publish transforms
         self.timer = self.create_timer(0.1, self._publish_transforms)
@@ -65,8 +67,9 @@ class TFBroadcasterNode(Node):
         t.transform.translation.z = self.lidar_z
         t.transform.rotation.x = 0.0
         t.transform.rotation.y = 0.0
-        t.transform.rotation.z = 0.0
-        t.transform.rotation.w = 1.0
+        yaw = radians(self.lidar_angle)
+        t.transform.rotation.z = sin(yaw / 2.0)
+        t.transform.rotation.w = cos(yaw / 2.0)
         self.tf_broadcaster.sendTransform(t)
 
 
