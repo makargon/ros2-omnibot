@@ -7,12 +7,12 @@ class DemoNode(Node):
     def __init__(self):
         super().__init__('demo_node')
         self.publisher = self.create_publisher(Twist, 'cmd_vel', 10)
-        self.timer = self.create_timer(1.0, self.timer_callback)
+        self.timer = self.create_timer(4.0, self.timer_callback)
         self.get_logger().info('Demo node started')
 
     def timer_callback(self):
         """Бесконечно двигается по квадрату раз в секунду"""
-        
+        self.get_logger().info('Start')
         msg = Twist()
         msg.angular.z = 0.0
         msg.linear.x = 0.2
@@ -38,9 +38,16 @@ class DemoNode(Node):
         rclpy.sleep(1)
 
 
-if __name__ == '__main__':
-    rclpy.init()
+def main(args=None):
+    rclpy.init(args=args)
     node = DemoNode()
-    rclpy.spin(node)
-    node.destroy_node()
-    rclpy.shutdown()
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()
