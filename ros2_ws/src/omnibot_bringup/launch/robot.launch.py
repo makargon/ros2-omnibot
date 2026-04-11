@@ -38,6 +38,7 @@ def generate_launch_description() -> LaunchDescription:
 
         _include('omnibot_actuator', 'actuator.launch.py', IfCondition(with_control)),
         # _include('omnibot_encoder', 'encoder.launch.py', IfCondition(with_control)),
+        # _include('omnibot_movement', 'movement.launch.py', IfCondition(with_control)),
         _include('omnibot_encoder', 'odometry.launch.py', IfCondition(with_control)),
         _include('omnibot_kinematic', 'kinematic.launch.py', IfCondition(with_control)),
 

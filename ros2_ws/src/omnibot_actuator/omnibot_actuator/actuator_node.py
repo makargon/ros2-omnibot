@@ -3,7 +3,7 @@ from typing import Any
 
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Float32MultiArray, Int32MultiArray
+from std_msgs.msg import Float32MultiArray, Int32MultiArray, Bool
 
 import lgpio
 import board
@@ -50,6 +50,9 @@ class ActuatorNode(Node):
         # pca_addr = int(self.get_parameter('pca9685.address').value)
         # pca_frec = int(self.get_parameter('pca9685.frequency').value)
         # gpio_chip = int(self.get_parameter('gpio_chip').value)
+        
+        self.start_pin = 18
+        self.trigger_on_close = True
 
         try:
             self.pca = PCA9685(board.I2C(), address=0x40)
@@ -66,6 +69,7 @@ class ActuatorNode(Node):
         lgpio.gpio_claim_output(self.chip, 22)
         lgpio.gpio_claim_output(self.chip, 26)
         lgpio.gpio_claim_output(self.chip, 27)
+        lgpio.gpio_claim_input(self.chip, self.start_pin, lgpio.SET_PULL_UP)
         
         self.motors = [
             MotorControl(pwm_channel=2, pin_a=26, pin_b=27, pca=self.pca, chip=self.chip),
@@ -93,7 +97,20 @@ class ActuatorNode(Node):
             10
         )
 
+        self.start_pub = self.create_publisher(Bool, '/start', 10)
+        self.timer = self.create_timer(1.0 / 10, self.check_reed_switch)
+
         self.servos[2].angle = 100
+
+    
+    def check_reed_switch(self):
+        value = lgpio.gpio_read(self.chip, self.start_pin)
+
+        if value == self.trigger_on_close:
+            msg = Bool()
+            msg.data = True
+            self.start_pub.publish(msg)
+            self.timer.cancel()
 
     def motor_callback(self, msg: Float32MultiArray) -> None:
         for motor, speed in zip(self.motors, msg.data):
