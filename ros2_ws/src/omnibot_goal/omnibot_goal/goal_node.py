@@ -62,6 +62,7 @@ class GoalController(Node):
 
         # Подписка на одометрию
         self.odom_sub = self.create_subscription(Odometry, '/odom', self.odom_callback, 10)
+        self.start_sub = self.create_subscription(Bool, '/start', self.odom_callback, 10)
 
         # Публикация команд скорости
         self.cmd_pub = self.create_publisher(Twist, '/cmd_vel', 10)
