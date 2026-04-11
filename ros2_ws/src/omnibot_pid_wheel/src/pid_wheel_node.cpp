@@ -37,6 +37,9 @@ PIDWheelNode::PIDWheelNode() : Node("pid_wheel_node"),
         "/encoder_ticks", 10,
         std::bind(&PIDWheelNode::encoder_callback, this, std::placeholders::_1));
 
+    logger_ = this->create_publisher<std_msgs::msg::Float32MultiArray>(
+        "/pid_logger", 10);
+
     motor_pub_ = this->create_publisher<std_msgs::msg::Float32MultiArray>(
         "/motor_speeds", 10);
 
