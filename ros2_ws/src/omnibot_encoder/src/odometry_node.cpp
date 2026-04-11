@@ -37,6 +37,7 @@ OdometryNode::OdometryNode()
       "Params: wheel_radius=%.3f, robot_radius=%.3f, ticks_per_rev=%.0f",
       wheel_radius_, robot_radius_, ticks_per_rev_);
 }
+
 void OdometryNode::encoder_callback(const std_msgs::msg::Int32MultiArray::SharedPtr msg) {
     if (msg->data.size() < 3) return;
 

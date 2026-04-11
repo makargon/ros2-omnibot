@@ -52,6 +52,11 @@ private:
     double vy_;
     double vtheta_;
 
+    std::deque<double> vx_filter_;
+    std::deque<double> vy_filter_;
+    std::deque<double> vtheta_filter_;
+    const size_t FILTER_WINDOW = 10;
+
     // Previous wheel positions/states [rads]:
     std::vector<double> wheels_old_pos_;
 
