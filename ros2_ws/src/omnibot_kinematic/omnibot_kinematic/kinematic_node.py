@@ -39,13 +39,11 @@ class KinematicNode(Node):
         r = self.wheel_radius
         l = self.wheel_base
         sqrt3 = math.sqrt(3.0)
-        coef = 2 * math.pi
+        coef = 2 * math.pi / r
 
-        w1 = coef * (vy - l * wz) / r
-        # TODO
-        # Опять что-то сломалось в кинематике
-        w2 = coef * (- (sqrt3 / 2) * vx - 0.5 * vy - l * wz ) / r
-        w3 = coef * ((sqrt3 / 2) * vx - 0.5 * vy - l * wz) / r
+        w1 = coef * (vy - l * wz)
+        w2 = coef * ((sqrt3 / 2) * vx - 0.5 * vy - l * wz)
+        w3 = coef * (-(sqrt3 / 2) * vx - 0.5 * vy - l * wz)
 
         wheel_msg = Float32MultiArray()
         wheel_msg.data = [w1, w2, w3]
